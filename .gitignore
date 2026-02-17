@@ -1,0 +1,17 @@
+# Environment files with sensitive data
+.env
+config.h
+
+# Node modules
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+config.h.example
+# OS files
+.DS_Store
+Thumbs.db
