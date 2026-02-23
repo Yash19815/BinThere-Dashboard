@@ -1,3 +1,28 @@
+/**
+ * @fileoverview BinThere – React Dashboard (App.jsx)
+ *
+ * Single-page dashboard for monitoring a smart dustbin in real time.
+ *
+ * Architecture:
+ *  - <App>              Root component; owns WebSocket connection and global state
+ *  - <Header>           Navigation bar: WS status dot, notifications, dark-mode toggle
+ *  - <AnalyticsSection> Line chart of daily fill-cycle counts (dry vs wet)
+ *  - <BinCard>          Summary card per bin with fill-tube visual
+ *  - <CompartmentPanel> Individual dry / wet compartment display inside a BinCard
+ *  - <HistoryModal>     Modal sheet with 30-row measurement table + mini line chart
+ *  - <HistoryChart>     Small SVG line chart used inside HistoryModal
+ *  - <NotificationPanel> Dropdown listing bins that exceed ALERT_THRESHOLD
+ *
+ * Data flow:
+ *  1. On mount: REST GET /api/bins populates bin list
+ *  2. WebSocket messages (type:"state"|"update") patch the bins array in-place
+ *  3. Every "update" message increments analyticsKey, which triggers
+ *     AnalyticsSection to re-fetch its analytics endpoint
+ *
+ * Environment variables (set in client/.env):
+ *  VITE_WS_URL  – WebSocket server URL (default: ws://localhost:3001)
+ *  VITE_API_URL – REST API base URL   (default: http://localhost:3001)
+ */
 import { useEffect, useState, useRef, useCallback } from "react";
 import "./App.css";
 
@@ -6,7 +31,18 @@ const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:3001";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 const ALERT_THRESHOLD = 80; // % — show notification
 
-// ── SVG linear path (straight segments — avoids Catmull-Rom overshoot on sparse data) ───
+// ── SVG Utilities ────────────────────────────────────────────────────────────
+/**
+ * Converts an array of {x, y} SVG coordinates into an SVG path string using
+ * straight line segments (M x y L x1 y1 …).
+ *
+ * Rationale: Catmull-Rom splines look nice with dense data but produce
+ * undesirable overshooting curves when data is sparse (e.g. all-zero days
+ * with a single spike). Linear paths are always accurate for count data.
+ *
+ * @param {{ x: number, y: number }[]} points - Ordered array of SVG coordinates
+ * @returns {string} SVG path data string, or "" if fewer than 2 points
+ */
 function linearPath(points) {
   if (points.length < 2) return "";
   return points
@@ -14,7 +50,22 @@ function linearPath(points) {
     .join(" ");
 }
 
-// ── Analytics Section ─────────────────────────────────────────────────────────
+// ── Analytics Section ────────────────────────────────────────────────────────
+/**
+ * Displays the fill-cycle analytics chart and today's summary stats.
+ *
+ * Re-fetches data when:
+ *  - The selected date range (range state) changes
+ *  - refreshKey changes (passed from App on every WebSocket "update" message)
+ *
+ * Chart uses two SVG line series (dry = amber, wet = blue) with gradient fills,
+ * dot markers at each data point, a dashed vertical crosshair on hover, and a
+ * floating tooltip showing the date label + individual counts.
+ *
+ * @param {{ binId: number, refreshKey: number }} props
+ *   binId      – Database ID of the bin to fetch analytics for
+ *   refreshKey – Monotonically increasing counter; increment to trigger a refetch
+ */
 function AnalyticsSection({ binId, refreshKey }) {
   const [data, setData] = useState(null);
   const [range, setRange] = useState(7);
@@ -22,6 +73,11 @@ function AnalyticsSection({ binId, refreshKey }) {
   const [hoveredIdx, setHoveredIdx] = useState(null);
   const svgRef = useRef(null);
 
+  /**
+   * Fetches analytics data from GET /api/bins/:id/analytics?range=<n>.
+   * Wrapped in useCallback with [binId, range, refreshKey] deps so it only
+   * re-creates (and re-runs via the useEffect below) when those values change.
+   */
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -63,17 +119,46 @@ function AnalyticsSection({ binId, refreshKey }) {
   const yMax = Math.max(Math.ceil(rawMax) + 1, 5); // at least 5 so chart isn't flat
   const yMin = 0;
 
+  /**
+   * Maps a (index, value) pair to an SVG {x, y} coordinate within the chart area.
+   * Index 0 → left edge (PL), index len-1 → right edge.
+   * Value 0 → bottom of chart area (PT + chartH), value yMax → top (PT).
+   *
+   * @param {number} i   - 0-based index in the data array
+   * @param {number} val - Y value (fill cycle count)
+   * @param {number} len - Total number of data points (for x-spacing)
+   * @returns {{ x: number, y: number }}
+   */
   function toPoint(i, val, len) {
     const x = PL + (i / Math.max(len - 1, 1)) * chartW;
     const y = PT + chartH - ((val - yMin) / (yMax - yMin)) * chartH;
     return { x, y };
   }
 
+  /**
+   * Converts a raw data array into an array of SVG points (or null for missing values).
+   * Null entries break the line path so gaps (missing data) render as discontinuities
+   * rather than straight lines to zero.
+   *
+   * @param {(number|null)[]} series - Raw data values from the API
+   * @param {number}          len    - Total number of labels/days
+   * @returns {({ x: number, y: number } | null)[]}
+   */
   function buildSeries(series, len) {
     if (!series) return [];
     return series.map((v, i) => (v !== null ? toPoint(i, v, len) : null));
   }
 
+  /**
+   * Builds the SVG \"d\" attribute for a line series, splitting at null points so
+   * that data gaps produce separate sub-paths rather than a line through zero.
+   *
+   * Each contiguous run of non-null points becomes one linearPath() segment.
+   * Multiple segments are joined into one \"d\" string with a space.
+   *
+   * @param {({ x: number, y: number } | null)[]} points
+   * @returns {string} SVG path \"d\" attribute
+   */
   function seriesPath(points) {
     const segments = [];
     let segment = [];
@@ -90,6 +175,18 @@ function AnalyticsSection({ binId, refreshKey }) {
     return segments.map((seg) => linearPath(seg)).join(" ");
   }
 
+  /**
+   * Builds the closed SVG path for a gradient fill area beneath the line series.
+   * Extends the line path down to the chart baseline and back to the start to form
+   * a closed polygon, which is then filled with a gradient (see <defs>).
+   *
+   * Returns "" if there are fewer than 2 valid points (no visible area to fill).
+   *
+   * @param {({ x: number, y: number } | null)[]} points - Output of buildSeries()
+   * @param {number}          len    - Total number of labels (unused but kept for clarity)
+   * @param {(number|null)[]} series - Original data array (null check guard)
+   * @returns {string} SVG path \"d\" attribute for the filled area
+   */
   function areaPath(points, len, series) {
     if (!series) return "";
     const validPts = points.filter(Boolean);
@@ -477,6 +574,13 @@ function AnalyticsSection({ binId, refreshKey }) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+/**
+ * Returns a CSS-safe level string used as a class modifier throughout the UI.
+ * Drives colour theming for fill tubes, status pills, and card outlines.
+ *
+ * @param {number|null} pct - Fill percentage 0–100, or null/undefined if no data
+ * @returns {"unknown"|"empty"|"low"|"medium"|"high"|"full"}
+ */
 function getLevel(pct) {
   if (pct === null || pct === undefined) return "unknown";
   if (pct < 10) return "empty";
@@ -486,6 +590,13 @@ function getLevel(pct) {
   return "full";
 }
 
+/**
+ * Returns the human-readable fill status label displayed in the status pill.
+ * Mirrors the server-side computeStatus() logic for consistency.
+ *
+ * @param {number|null} pct - Fill percentage 0–100, or null/undefined
+ * @returns {string} "Empty" | "Low" | "Medium" | "High" | "Full" | "—"
+ */
 function getStatusLabel(pct) {
   if (pct === null || pct === undefined) return "—";
   if (pct < 10) return "Empty";
@@ -495,6 +606,13 @@ function getStatusLabel(pct) {
   return "Full";
 }
 
+/**
+ * Returns a human-readable relative time string from an ISO-8601 timestamp.
+ * Resolves to seconds/minutes/hours since now. Used for the "Updated X ago" label.
+ *
+ * @param {string|null} isoString - ISO-8601 datetime string from the database
+ * @returns {string} e.g. "12s ago", "3m ago", "2h ago", or "No data yet"
+ */
 function timeAgo(isoString) {
   if (!isoString) return "No data yet";
   const diff = Date.now() - new Date(isoString).getTime();
@@ -506,6 +624,13 @@ function timeAgo(isoString) {
   return `${h}h ago`;
 }
 
+/**
+ * Formats an ISO-8601 timestamp as a localised HH:MM:SS string (en-IN locale).
+ * Used in the HistoryModal measurement table.
+ *
+ * @param {string|null} isoString
+ * @returns {string} e.g. "14:32:07" or "—" if null
+ */
 function formatTime(isoString) {
   if (!isoString) return "—";
   return new Date(isoString).toLocaleTimeString("en-IN", {
@@ -517,6 +642,21 @@ function formatTime(isoString) {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
+/**
+ * Renders one waste compartment (dry or wet) as a vertical fill-tube gauge.
+ * Colour and label update dynamically based on the fill level.
+ *
+ * Visual elements:
+ *  - Status pill (Empty → Full) in the header
+ *  - Animated fill-liquid bar whose height equals fill_level_percent
+ *  - Tick marks at 25 %, 50 %, 75 %
+ *  - Large percentage and raw cm distance in the centre
+ *  - "Updated X ago" footer
+ *
+ * @param {{ label: string, data: object|null, darkMode: boolean }} props
+ *   label  – Display label, e.g. "🌫 Dry Waste"
+ *   data   – Latest compartment reading from the API, or null if never read
+ */
 function CompartmentPanel({ label, data, darkMode }) {
   const pct = data?.fill_level_percent ?? null;
   const level = getLevel(pct);
@@ -563,6 +703,16 @@ function CompartmentPanel({ label, data, darkMode }) {
   );
 }
 
+/**
+ * Summary card for a single bin. Shows both compartment panels side-by-side,
+ * a combined max-fill progress bar at the bottom, and an alert chip when either
+ * compartment exceeds ALERT_THRESHOLD.
+ * Clicking the card opens the HistoryModal via the onClick callback.
+ *
+ * @param {{ bin: object, onClick: () => void }} props
+ *   bin     – Full bin object from the API (includes .dry and .wet sub-objects)
+ *   onClick – Called when the card is clicked to open the detail modal
+ */
 function BinCard({ bin, onClick }) {
   const dryPct = bin?.dry?.fill_level_percent ?? null;
   const wetPct = bin?.wet?.fill_level_percent ?? null;
@@ -600,6 +750,15 @@ function BinCard({ bin, onClick }) {
   );
 }
 
+/**
+ * Dropdown panel listing bins whose fill level exceeds ALERT_THRESHOLD.
+ * Renders a count badge in its header and one notification item per critical bin.
+ * Shown when the notification bell button in the Header is clicked.
+ *
+ * @param {{ bins: object[], onClose: () => void }} props
+ *   bins    – All known bins (filtering is done inside the component)
+ *   onClose – Called when "Clear All" is clicked (hides the dropdown)
+ */
 function NotificationPanel({ bins, onClose }) {
   const alerts = bins.filter((b) => {
     const m = Math.max(
@@ -647,6 +806,21 @@ function NotificationPanel({ bins, onClose }) {
   );
 }
 
+/**
+ * Full-screen overlay modal showing a bin's measurement history.
+ * Content:
+ *  - Two <HistoryChart> mini charts (dry and wet), each showing the last 15 readings
+ *  - A scrollable table of the last 30 measurements with time, compartment,
+ *    distance, fill %, and a status pill
+ *
+ * Clicking the backdrop (outside the modal box) closes the modal.
+ * Propagation is stopped on the inner box so clicks inside don't bubble.
+ *
+ * @param {{ bin: object|null, history: object[], onClose: () => void }} props
+ *   bin     – The bin being inspected; null renders nothing
+ *   history – Array of measurement rows from GET /api/bins/:id
+ *   onClose – Callback to clear selectedBin and close the modal
+ */
 function HistoryModal({ bin, history, onClose }) {
   if (!bin) return null;
 
@@ -717,6 +891,19 @@ function HistoryModal({ bin, history, onClose }) {
   );
 }
 
+/**
+ * Small SVG area chart used inside HistoryModal for per-compartment history.
+ * Renders a filled gradient polygon beneath a polyline of fill % over time.
+ * Each data point is also rendered as a circle dot.
+ *
+ * Coordinates are calculated so index 0 is on the left and index n-1 on the right,
+ * with fill % mapped linearly from bottom (0 %) to top (100 %).
+ *
+ * @param {{ label: string, entries: object[], color: string }} props
+ *   label   – Section heading, e.g. "🌫 Dry Waste"
+ *   entries – Measurement rows (must have fill_level_percent), oldest first
+ *   color   – Hex colour for the line and dots (e.g. "#3b82f6")
+ */
 function HistoryChart({ label, entries, color }) {
   if (entries.length === 0)
     return (
@@ -795,6 +982,19 @@ function HistoryChart({ label, entries, color }) {
   );
 }
 
+/**
+ * Application header bar containing the logo, WebSocket status indicator,
+ * notification bell with dropdown, and a profile menu with dark-mode toggle.
+ *
+ * The notification bell shows a badge with the count of bins at or above ALERT_THRESHOLD.
+ * Opening the notification panel closes the profile dropdown, and vice versa.
+ *
+ * @param {{ bins: object[], darkMode: boolean, onToggleDark: () => void, wsStatus: string }} props
+ *   bins         – All known bins (used to compute alert count)
+ *   darkMode     – Whether dark mode is currently active
+ *   onToggleDark – Callback to toggle dark mode
+ *   wsStatus     – "connecting" | "connected" | "disconnected" (drives the WS dot colour)
+ */
 function Header({ bins, darkMode, onToggleDark, wsStatus }) {
   const [showNotif, setShowNotif] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -879,6 +1079,25 @@ function Header({ bins, darkMode, onToggleDark, wsStatus }) {
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
+/**
+ * Root application component.
+ *
+ * State:
+ *  bins         – Array of bin objects, patched in place by WebSocket messages
+ *  history      – Measurements for the currently selected bin (loaded on demand)
+ *  selectedBin  – The bin whose HistoryModal is open, or null
+ *  darkMode     – Persisted in localStorage under the key "dark"
+ *  wsStatus     – "connecting" | "connected" | "disconnected"
+ *  analyticsKey – Monotonic counter; bumped on every WS "update" to trigger
+ *                  AnalyticsSection refetch without polling
+ *
+ * Lifecycle:
+ *  1. Mount: fetchBins() (REST) + connect() (WebSocket)
+ *  2. WS message type "state"  → upserts the bin list (server sends on connect)
+ *  3. WS message type "update" → upserts + increments analyticsKey
+ *  4. WS disconnects           → auto-reconnects after 3 s
+ *  5. Unmount                  → closes the WebSocket cleanly
+ */
 export default function App() {
   const [bins, setBins] = useState([]);
   const [history, setHistory] = useState([]);

@@ -1,3 +1,25 @@
+/**
+ * @fileoverview BinThere – Backend Server
+ *
+ * Express + WebSocket server that:
+ *  - Stores sensor readings in a SQLite database (better-sqlite3)
+ *  - Detects fill-cycle events (bin fills to ≥ FULL_THRESHOLD after being emptied)
+ *  - Pushes real-time updates to all connected WebSocket clients
+ *  - Exposes a REST API consumed by the React dashboard
+ *
+ * Environment variables (set in server/.env):
+ *  PORT    – HTTP + WS port to listen on (default: 3001)
+ *  DB_PATH – Absolute path to the SQLite file (default: <server dir>/bins.db)
+ *
+ * API surface:
+ *  GET  /api/health                    – Liveness probe
+ *  GET  /api/bins                      – All bins with latest compartment state
+ *  GET  /api/bins/:id                  – Single bin + last 50 measurements
+ *  GET  /api/bins/:id/analytics        – Daily fill-cycle counts (?range=7|14|30)
+ *  POST /api/bins/:id/measurement      – Record a reading for one compartment
+ *  POST /api/sensor-data               – Legacy dual-sensor endpoint (sensor1/sensor2)
+ */
+
 import express from "express";
 import cors from "cors";
 import { WebSocketServer } from "ws";
@@ -9,14 +31,37 @@ import { fileURLToPath } from "url";
 
 dotenv.config();
 
+// ESM-compatible __dirname equivalent
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** Absolute path to the SQLite database file. Overridable via DB_PATH env var. */
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, "bins.db");
 
 // ── Database Setup ──────────────────────────────────────────────────────────
+
+/**
+ * Synchronous SQLite connection. better-sqlite3 uses blocking I/O which is
+ * appropriate here — reads/writes are fast and never overlap with async code.
+ */
 const db = new Database(DB_PATH);
 
+/**
+ * Enable Write-Ahead Log mode.
+ * WAL allows concurrent reads while a write is in progress, which prevents
+ * "database is locked" errors when the dashboard and ESP32 hit the server
+ * simultaneously.
+ */
 db.pragma("journal_mode = WAL");
 
+/**
+ * Bootstrap the schema on every startup (idempotent via IF NOT EXISTS).
+ * Full schema with indexes lives in server/schema.sql for reference.
+ *
+ * Tables:
+ *  bins         – One row per physical dustbin unit
+ *  measurements – Every raw sensor reading from the ESP32
+ *  fill_cycles  – One row per detected fill event (see recordFillCycle)
+ */
 db.exec(`
   CREATE TABLE IF NOT EXISTS bins (
     id          INTEGER PRIMARY KEY,
@@ -39,26 +84,57 @@ db.exec(`
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     bin_id        INTEGER NOT NULL,
     compartment   TEXT    NOT NULL CHECK(compartment IN ('dry','wet')),
-    filled_at     TEXT    NOT NULL,
-    emptied_at    TEXT,
+    filled_at     TEXT    NOT NULL,   -- ISO-8601 when fill threshold was crossed
+    emptied_at    TEXT,               -- NULL while the bin is still full
     FOREIGN KEY (bin_id) REFERENCES bins(id)
   );
 `);
 
-// Seed the single bin if not present
+/** Ensure default Bin #1 exists so the dashboard has something to display. */
 const seedBin = db.prepare(
   "INSERT OR IGNORE INTO bins (id, name, location, max_height_cm) VALUES (?, ?, ?, ?)",
 );
 seedBin.run(1, "Dustbin #001", "Main Campus", 50);
 
 // ── Fill-Cycle Detection ─────────────────────────────────────────────────────
-// Thresholds
-const FULL_THRESHOLD = 80; // % — crossing UP into this counts as a fill event
-const EMPTY_THRESHOLD = 20; // % — must drop below before the next fill is counted
 
-// In-memory state per "binId:compartment", lazy-initialized from last DB reading
+/**
+ * Fill level at which a "full" event is recorded (0–100 %).
+ * A bin must rise ABOVE this value coming from a post-empty state.
+ */
+const FULL_THRESHOLD = 80;
+
+/**
+ * Fill level below which a bin is considered "emptied".
+ * The bin must drop below this after being full before the next fill is counted,
+ * preventing double-counting if the level fluctuates near FULL_THRESHOLD.
+ */
+const EMPTY_THRESHOLD = 20;
+
+/**
+ * In-memory fill state cache keyed by "${binId}:${compartment}".
+ * Lazy-initialised from the last DB reading the first time a compartment is seen.
+ * Avoids repeated DB queries on every sensor reading.
+ *
+ * Each entry: { wasFull: boolean, wasEmptied: boolean }
+ */
 const fillStateCache = new Map();
 
+/**
+ * Returns (and lazily initialises) the fill-state entry for a compartment.
+ *
+ * Initialisation rule:
+ *  - If last reading ≥ FULL_THRESHOLD → wasFull=true,  wasEmptied=false
+ *  - If last reading < FULL_THRESHOLD → wasFull=false, wasEmptied=true
+ *
+ * Using < FULL_THRESHOLD (not < EMPTY_THRESHOLD) for wasEmptied avoids the
+ * "permanently stuck" bug where bins with mid-range readings (e.g. 50 %) would
+ * never have wasEmptied=true and therefore never count a future fill event.
+ *
+ * @param {number} binId       - Database bin ID
+ * @param {string} compartment - "dry" | "wet"
+ * @returns {{ wasFull: boolean, wasEmptied: boolean }}
+ */
 function getFillState(binId, compartment) {
   const key = `${binId}:${compartment}`;
   if (!fillStateCache.has(key)) {
@@ -80,7 +156,26 @@ function getFillState(binId, compartment) {
   return fillStateCache.get(key);
 }
 
-// Call this AFTER inserting the measurement row
+/**
+ * Detects fill/empty transitions and persists them to the fill_cycles table.
+ *
+ * State machine (per compartment):
+ *
+ *   wasEmptied=true + level ≥ FULL_THRESHOLD
+ *     → INSERT fill_cycles row, set wasFull=true, wasEmptied=false
+ *
+ *   wasFull=true + level < EMPTY_THRESHOLD
+ *     → UPDATE most-recent open fill_cycles row with emptied_at,
+ *       set wasFull=false, wasEmptied=true
+ *
+ * Must be called AFTER the measurement row is already inserted so the DB is
+ * always consistent (measurement exists before its derived fill event).
+ *
+ * @param {number} binId       - Database bin ID
+ * @param {string} compartment - "dry" | "wet"
+ * @param {number} fillLevel   - Current fill level 0–100 %
+ * @param {string} timestamp   - ISO-8601 timestamp string
+ */
 function recordFillCycle(binId, compartment, fillLevel, timestamp) {
   const state = getFillState(binId, compartment);
 
@@ -109,11 +204,37 @@ function recordFillCycle(binId, compartment, fillLevel, timestamp) {
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
+
+/**
+ * Converts an HC-SR04 raw distance reading into a 0–100 % fill level.
+ *
+ * Formula: ((maxHeight − distance) / maxHeight) × 100
+ * When the bin is empty the sensor reads ≈ maxHeight (full distance to bottom).
+ * When full the reading is near 0 (lid-level echo).
+ * Result is clamped to [0, 100] to handle out-of-range sensor noise.
+ *
+ * @param {number} rawDistanceCm - HC-SR04 reading in centimetres
+ * @param {number} maxHeightCm   - Empty-bin height stored in bins.max_height_cm
+ * @returns {number} Fill percentage rounded to 2 decimal places
+ */
 function computeFillLevel(rawDistanceCm, maxHeightCm) {
   const fill = ((maxHeightCm - rawDistanceCm) / maxHeightCm) * 100;
   return Math.min(100, Math.max(0, parseFloat(fill.toFixed(2))));
 }
 
+/**
+ * Maps a fill percentage to a human-readable status label shown on the dashboard.
+ *
+ * Thresholds:
+ *  < 10 % → "Empty"
+ *  < 50 % → "Low"
+ *  < 80 % → "Medium"
+ *  < 95 % → "High"
+ *  ≥ 95 % → "Full"
+ *
+ * @param {number} fillPercent - 0–100 %
+ * @returns {"Empty"|"Low"|"Medium"|"High"|"Full"}
+ */
 function computeStatus(fillPercent) {
   if (fillPercent < 10) return "Empty";
   if (fillPercent < 50) return "Low";
@@ -122,6 +243,15 @@ function computeStatus(fillPercent) {
   return "Full";
 }
 
+/**
+ * Assembles a complete bin response object with the latest reading for each
+ * compartment (dry and wet), suitable for broadcasting over WebSocket or
+ * returning as an API response.
+ *
+ * @param {number} binId - Database bin ID
+ * @returns {{ id, name, location, max_height_cm, dry: object|null, wet: object|null } | null}
+ *   null if the bin does not exist in the database.
+ */
 function getBinWithCompartments(binId) {
   const bin = db.prepare("SELECT * FROM bins WHERE id = ?").get(binId);
   if (!bin) return null;
@@ -169,15 +299,28 @@ function getBinWithCompartments(binId) {
 }
 
 // ── Express + WebSocket ──────────────────────────────────────────────────────
+
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+/** Shared HTTP server so Express and WebSocket listen on the same port. */
 const server = http.createServer(app);
+
+/** WebSocket server attached to the HTTP server. */
 const wss = new WebSocketServer({ server });
+
+/** Set of all currently connected WebSocket clients. */
 const clients = new Set();
 
 app.use(cors());
 app.use(express.json());
 
+/**
+ * WebSocket connection handler.
+ * On connect: sends the current bin state immediately so the dashboard
+ * doesn't show a blank card while waiting for the first sensor reading.
+ * Automatically removes the client from the set on disconnect or error.
+ */
 wss.on("connection", (ws) => {
   console.log("WS client connected — sending current state");
   clients.add(ws);
@@ -190,6 +333,12 @@ wss.on("connection", (ws) => {
   ws.on("error", () => clients.delete(ws));
 });
 
+/**
+ * Broadcasts a JSON payload to every connected WebSocket client.
+ * Skips clients that are no longer in the OPEN (readyState === 1) state.
+ *
+ * @param {object} payload - Will be serialised with JSON.stringify
+ */
 function broadcast(payload) {
   const msg = JSON.stringify(payload);
   for (const ws of clients) {
@@ -199,7 +348,11 @@ function broadcast(payload) {
 
 // ── Routes ───────────────────────────────────────────────────────────────────
 
-// Health check
+/**
+ * GET /api/health
+ * Liveness probe — returns HTTP 200 with server status and connected client count.
+ * Used by monitoring tools and startup checks.
+ */
 app.get("/api/health", (req, res) => {
   res.json({
     status: "ok",
@@ -208,14 +361,31 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// GET all bins (array, expandable to many bins later)
+/**
+ * GET /api/bins
+ * Returns all bins with their latest compartment state.
+ * Currently always returns one bin (Dustbin #001).
+ * Designed to be extended when more bins are added.
+ */
 app.get("/api/bins", (req, res) => {
   const bins = db.prepare("SELECT * FROM bins").all();
   const result = bins.map((b) => getBinWithCompartments(b.id));
   res.json({ status: "success", bins: result });
 });
 
-// GET analytics — daily fill-cycle count per compartment, queried from fill_cycles table
+/**
+ * GET /api/bins/:id/analytics
+ * Returns per-day fill-cycle counts for the requested date range.
+ *
+ * Query params:
+ *  range – Number of days to look back (default: 7, max: 90)
+ *
+ * Response shape:
+ *  { status, labels: string[], dry: number[], wet: number[], latest: { date, dry, wet } }
+ *
+ * Days with zero fill cycles are included in the response so the chart
+ * always shows the full requested window rather than sparse points.
+ */
 app.get("/api/bins/:id/analytics", (req, res) => {
   const binId = parseInt(req.params.id, 10);
   const bin = db.prepare("SELECT * FROM bins WHERE id = ?").get(binId);
@@ -246,6 +416,7 @@ app.get("/api/bins/:id/analytics", (req, res) => {
     )
     .all(binId, `-${days}`);
 
+  // Build lookup maps: { "2026-02-23": count }
   const dryMap = {},
     wetMap = {};
   rows.forEach((r) => {
@@ -253,6 +424,7 @@ app.get("/api/bins/:id/analytics", (req, res) => {
     if (r.compartment === "wet") wetMap[r.day] = r.cnt;
   });
 
+  // Format labels for display in the chart (e.g. "23 Feb")
   const labels = allDays.map((d) => {
     const date = new Date(d + "T00:00:00");
     return date.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
@@ -281,7 +453,13 @@ app.get("/api/bins/:id/analytics", (req, res) => {
   });
 });
 
-// GET single bin with history
+/**
+ * GET /api/bins/:id
+ * Returns full bin details plus the last 50 measurements (for the history modal).
+ *
+ * Response shape:
+ *  { status, bin: BinObject, history: Measurement[] }
+ */
 app.get("/api/bins/:id", (req, res) => {
   const binId = parseInt(req.params.id, 10);
   const bin = getBinWithCompartments(binId);
@@ -303,9 +481,22 @@ app.get("/api/bins/:id", (req, res) => {
   res.json({ status: "success", bin, history });
 });
 
-// POST measurement from ESP32
-// Accepts: { raw_distance_cm: X } or { fill_level_percent: X }
-// Compartment determined by query param ?compartment=dry|wet (default: auto from sensor1/sensor2 legacy)
+/**
+ * POST /api/bins/:id/measurement
+ * Records a sensor reading for a single compartment and broadcasts the update.
+ *
+ * Body (JSON):
+ *  compartment      – "dry" | "wet" (default: "dry")
+ *  raw_distance_cm  – HC-SR04 reading; fill % is computed server-side
+ *  fill_level_percent – Alternative: supply fill % directly; raw distance is back-calculated
+ *
+ * At least one of raw_distance_cm or fill_level_percent must be provided.
+ *
+ * Side effects:
+ *  1. Inserts into measurements table
+ *  2. Calls recordFillCycle to detect/persist fill events
+ *  3. Broadcasts { type: "update", bin } to all WebSocket clients
+ */
 app.post("/api/bins/:id/measurement", (req, res) => {
   const binId = parseInt(req.params.id, 10);
   const bin = db.prepare("SELECT * FROM bins WHERE id = ?").get(binId);
@@ -323,9 +514,11 @@ app.post("/api/bins/:id/measurement", (req, res) => {
   let fillLevel, rawDistance;
 
   if (raw_distance_cm !== undefined) {
+    // Primary path: ESP32 sends raw HC-SR04 distance; server computes fill %
     rawDistance = parseFloat(raw_distance_cm);
     fillLevel = computeFillLevel(rawDistance, bin.max_height_cm);
   } else if (fill_level_percent !== undefined) {
+    // Alternative path: client already computed fill %; back-calculate raw distance
     fillLevel = Math.min(100, Math.max(0, parseFloat(fill_level_percent)));
     rawDistance = parseFloat(
       ((1 - fillLevel / 100) * bin.max_height_cm).toFixed(2),
@@ -362,7 +555,18 @@ app.post("/api/bins/:id/measurement", (req, res) => {
   });
 });
 
-// Legacy endpoint – maps sensor1→dry, sensor2→wet for existing ESP32 sketch
+/**
+ * POST /api/sensor-data
+ * Legacy endpoint used by the original ESP32 sketch (ESP32_SAMPLE.ino).
+ * Accepts sensor1 (→ dry compartment) and sensor2 (→ wet compartment) raw
+ * distance values and records both as measurements for Bin #1.
+ *
+ * Body (JSON):
+ *  sensor1 – HC-SR04 reading for dry waste compartment (cm)
+ *  sensor2 – HC-SR04 reading for wet waste compartment (cm)
+ *
+ * Side effects: same as POST /api/bins/:id/measurement × 2
+ */
 app.post("/api/sensor-data", (req, res) => {
   const { sensor1, sensor2 } = req.body;
   if (sensor1 === undefined || sensor2 === undefined) {
