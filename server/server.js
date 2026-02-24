@@ -6,18 +6,27 @@
  *  - Detects fill-cycle events (bin fills to ≥ FULL_THRESHOLD after being emptied)
  *  - Pushes real-time updates to all connected WebSocket clients
  *  - Exposes a REST API consumed by the React dashboard
+ *  - JWT-based authentication (login / register / me endpoints)
  *
  * Environment variables (set in server/.env):
- *  PORT    – HTTP + WS port to listen on (default: 3001)
- *  DB_PATH – Absolute path to the SQLite file (default: <server dir>/bins.db)
+ *  PORT                   – HTTP + WS port (default: 3001)
+ *  DB_PATH                – Absolute path to SQLite file
+ *  JWT_SECRET             – Secret key for signing JWTs
+ *  JWT_EXPIRES_IN         – Token lifetime (default: 7d)
+ *  DEFAULT_ADMIN_PASSWORD – Password for the seeded admin account
  *
- * API surface:
+ * Auth API surface:
+ *  POST /api/auth/register – Create a new user account
+ *  POST /api/auth/login    – Login and get a JWT
+ *  GET  /api/auth/me       – Verify token, return current user
+ *
+ * Protected API surface (requires Authorization: Bearer <token>):
  *  GET  /api/health                    – Liveness probe
  *  GET  /api/bins                      – All bins with latest compartment state
  *  GET  /api/bins/:id                  – Single bin + last 50 measurements
  *  GET  /api/bins/:id/analytics        – Daily fill-cycle counts (?range=7|14|30)
  *  POST /api/bins/:id/measurement      – Record a reading for one compartment
- *  POST /api/sensor-data               – Legacy dual-sensor endpoint (sensor1/sensor2)
+ *  POST /api/sensor-data               – Legacy dual-sensor endpoint
  */
 
 import express from "express";
@@ -28,6 +37,8 @@ import dotenv from "dotenv";
 import Database from "better-sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 dotenv.config();
 
@@ -84,9 +95,17 @@ db.exec(`
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     bin_id        INTEGER NOT NULL,
     compartment   TEXT    NOT NULL CHECK(compartment IN ('dry','wet')),
-    filled_at     TEXT    NOT NULL,   -- ISO-8601 when fill threshold was crossed
-    emptied_at    TEXT,               -- NULL while the bin is still full
+    filled_at     TEXT    NOT NULL,
+    emptied_at    TEXT,
     FOREIGN KEY (bin_id) REFERENCES bins(id)
+  );
+
+  CREATE TABLE IF NOT EXISTS users (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    username      TEXT    NOT NULL UNIQUE,
+    password_hash TEXT    NOT NULL,
+    role          TEXT    NOT NULL DEFAULT 'user' CHECK(role IN ('admin','user')),
+    created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
   );
 `);
 
@@ -95,6 +114,72 @@ const seedBin = db.prepare(
   "INSERT OR IGNORE INTO bins (id, name, location, max_height_cm) VALUES (?, ?, ?, ?)",
 );
 seedBin.run(1, "Dustbin #001", "Main Campus", 50);
+
+/**
+ * Seed a default admin user on first startup.
+ * Username and password are taken from env vars so they can be overridden
+ * without modifying code. The password is always stored as a bcrypt hash.
+ */
+const adminUsername = process.env.DEFAULT_ADMIN_USERNAME || "admin";
+const adminPassword = process.env.DEFAULT_ADMIN_PASSWORD || "admin123";
+
+const existingAdmin = db
+  .prepare("SELECT id FROM users WHERE username = ?")
+  .get(adminUsername);
+
+if (!existingAdmin) {
+  const hash = bcrypt.hashSync(adminPassword, 10);
+  db.prepare(
+    "INSERT INTO users (username, password_hash, role) VALUES (?, ?, 'admin')",
+  ).run(adminUsername, hash);
+  console.log(`✅ Default admin user "${adminUsername}" created`);
+}
+
+// ── JWT Helpers ──────────────────────────────────────────────────────────────
+
+const JWT_SECRET = process.env.JWT_SECRET || "change-me-in-production";
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+
+/**
+ * Signs a JWT payload for a given user.
+ *
+ * @param {{ id: number, username: string, role: string }} user
+ * @returns {string} Signed JWT token string
+ */
+function signToken(user) {
+  return jwt.sign(
+    { sub: user.id, username: user.username, role: user.role },
+    JWT_SECRET,
+    { expiresIn: JWT_EXPIRES_IN },
+  );
+}
+
+/**
+ * Express middleware that validates the `Authorization: Bearer <token>` header.
+ * Attaches the decoded payload to `req.user` if valid.
+ * Returns HTTP 401 if the token is missing or invalid.
+ *
+ * @param {express.Request}  req
+ * @param {express.Response} res
+ * @param {express.NextFunction} next
+ */
+function requireAuth(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res
+      .status(401)
+      .json({ status: "error", message: "Unauthorized — no token" });
+  }
+  const token = authHeader.slice(7);
+  try {
+    req.user = jwt.verify(token, JWT_SECRET);
+    next();
+  } catch {
+    return res
+      .status(401)
+      .json({ status: "error", message: "Unauthorized — invalid token" });
+  }
+}
 
 // ── Fill-Cycle Detection ─────────────────────────────────────────────────────
 
@@ -315,6 +400,100 @@ const clients = new Set();
 app.use(cors());
 app.use(express.json());
 
+// ── Auth Routes (public) ─────────────────────────────────────────────────────
+
+/**
+ * POST /api/auth/login
+ * Verifies credentials and returns a signed JWT on success.
+ *
+ * Body: { username: string, password: string }
+ * Returns: { status, token, user: { id, username, role } }
+ */
+app.post("/api/auth/login", (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ status: "error", message: "username and password are required" });
+  }
+
+  const user = db
+    .prepare("SELECT * FROM users WHERE username = ?")
+    .get(username);
+
+  if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+    return res
+      .status(401)
+      .json({ status: "error", message: "Invalid credentials" });
+  }
+
+  const token = signToken(user);
+  res.json({
+    status: "success",
+    token,
+    user: { id: user.id, username: user.username, role: user.role },
+  });
+});
+
+/**
+ * POST /api/auth/register
+ * Creates a new user account (admin-only in production; open here for dev).
+ *
+ * Body: { username: string, password: string, role?: 'admin'|'user' }
+ * Returns: { status, token, user: { id, username, role } }
+ */
+app.post("/api/auth/register", (req, res) => {
+  const { username, password, role = "user" } = req.body;
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ status: "error", message: "username and password are required" });
+  }
+  if (!["admin", "user"].includes(role)) {
+    return res
+      .status(400)
+      .json({ status: "error", message: "role must be 'admin' or 'user'" });
+  }
+
+  const existing = db
+    .prepare("SELECT id FROM users WHERE username = ?")
+    .get(username);
+  if (existing) {
+    return res
+      .status(409)
+      .json({ status: "error", message: "Username already taken" });
+  }
+
+  const hash = bcrypt.hashSync(password, 10);
+  const info = db
+    .prepare(
+      "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+    )
+    .run(username, hash, role);
+
+  const newUser = { id: info.lastInsertRowid, username, role };
+  const token = signToken(newUser);
+  res.status(201).json({ status: "success", token, user: newUser });
+});
+
+/**
+ * GET /api/auth/me
+ * Returns the currently authenticated user's info.
+ * Used by the frontend to rehydrate the auth session on page load.
+ *
+ * Requires: Authorization: Bearer <token>
+ * Returns: { status, user: { id, username, role } }
+ */
+app.get("/api/auth/me", requireAuth, (req, res) => {
+  const user = db
+    .prepare("SELECT id, username, role FROM users WHERE id = ?")
+    .get(req.user.sub);
+  if (!user) {
+    return res.status(404).json({ status: "error", message: "User not found" });
+  }
+  res.json({ status: "success", user });
+});
+
 /**
  * WebSocket connection handler.
  * On connect: sends the current bin state immediately so the dashboard
@@ -353,7 +532,7 @@ function broadcast(payload) {
  * Liveness probe — returns HTTP 200 with server status and connected client count.
  * Used by monitoring tools and startup checks.
  */
-app.get("/api/health", (req, res) => {
+app.get("/api/health", requireAuth, (req, res) => {
   res.json({
     status: "ok",
     connectedClients: clients.size,
@@ -367,7 +546,7 @@ app.get("/api/health", (req, res) => {
  * Currently always returns one bin (Dustbin #001).
  * Designed to be extended when more bins are added.
  */
-app.get("/api/bins", (req, res) => {
+app.get("/api/bins", requireAuth, (req, res) => {
   const bins = db.prepare("SELECT * FROM bins").all();
   const result = bins.map((b) => getBinWithCompartments(b.id));
   res.json({ status: "success", bins: result });
@@ -386,7 +565,7 @@ app.get("/api/bins", (req, res) => {
  * Days with zero fill cycles are included in the response so the chart
  * always shows the full requested window rather than sparse points.
  */
-app.get("/api/bins/:id/analytics", (req, res) => {
+app.get("/api/bins/:id/analytics", requireAuth, (req, res) => {
   const binId = parseInt(req.params.id, 10);
   const bin = db.prepare("SELECT * FROM bins WHERE id = ?").get(binId);
   if (!bin)
@@ -460,7 +639,7 @@ app.get("/api/bins/:id/analytics", (req, res) => {
  * Response shape:
  *  { status, bin: BinObject, history: Measurement[] }
  */
-app.get("/api/bins/:id", (req, res) => {
+app.get("/api/bins/:id", requireAuth, (req, res) => {
   const binId = parseInt(req.params.id, 10);
   const bin = getBinWithCompartments(binId);
   if (!bin)
@@ -497,7 +676,7 @@ app.get("/api/bins/:id", (req, res) => {
  *  2. Calls recordFillCycle to detect/persist fill events
  *  3. Broadcasts { type: "update", bin } to all WebSocket clients
  */
-app.post("/api/bins/:id/measurement", (req, res) => {
+app.post("/api/bins/:id/measurement", requireAuth, (req, res) => {
   const binId = parseInt(req.params.id, 10);
   const bin = db.prepare("SELECT * FROM bins WHERE id = ?").get(binId);
   if (!bin)

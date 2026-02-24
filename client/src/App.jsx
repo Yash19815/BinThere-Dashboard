@@ -25,11 +25,22 @@
  */
 import { useEffect, useState, useRef, useCallback } from "react";
 import "./App.css";
+import { useAuth } from "./AuthContext.jsx";
+import LoginPage from "./LoginPage.jsx";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:3001";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 const ALERT_THRESHOLD = 80; // % — show notification
+
+/**
+ * Returns the common auth headers to attach to every API fetch.
+ * @param {string|null} token - JWT token from AuthContext
+ * @returns {Record<string, string>}
+ */
+function authHeaders(token) {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 // ── SVG Utilities ────────────────────────────────────────────────────────────
 /**
@@ -984,18 +995,12 @@ function HistoryChart({ label, entries, color }) {
 
 /**
  * Application header bar containing the logo, WebSocket status indicator,
- * notification bell with dropdown, and a profile menu with dark-mode toggle.
+ * notification bell with dropdown, and a profile menu with user info,
+ * dark-mode toggle, and a Logout button.
  *
- * The notification bell shows a badge with the count of bins at or above ALERT_THRESHOLD.
- * Opening the notification panel closes the profile dropdown, and vice versa.
- *
- * @param {{ bins: object[], darkMode: boolean, onToggleDark: () => void, wsStatus: string }} props
- *   bins         – All known bins (used to compute alert count)
- *   darkMode     – Whether dark mode is currently active
- *   onToggleDark – Callback to toggle dark mode
- *   wsStatus     – "connecting" | "connected" | "disconnected" (drives the WS dot colour)
+ * @param {{ bins: object[], darkMode: boolean, onToggleDark: () => void, wsStatus: string, user: object|null, onLogout: () => void }} props
  */
-function Header({ bins, darkMode, onToggleDark, wsStatus }) {
+function Header({ bins, darkMode, onToggleDark, wsStatus, user, onLogout }) {
   const [showNotif, setShowNotif] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
@@ -1056,9 +1061,8 @@ function Header({ bins, darkMode, onToggleDark, wsStatus }) {
           {showProfile && (
             <div className="profile-dropdown">
               <div className="profile-info">
-                <strong>Admin User</strong>
-                <span>admin@binthere.io</span>
-                <span className="role-tag">Admin</span>
+                <strong>{user?.username ?? "Admin User"}</strong>
+                <span className="role-tag">{user?.role ?? "admin"}</span>
               </div>
               <div className="profile-action">
                 <span>☀ Dark Mode</span>
@@ -1068,6 +1072,17 @@ function Header({ bins, darkMode, onToggleDark, wsStatus }) {
                   aria-label="Toggle dark mode"
                 >
                   <span className="toggle-thumb" />
+                </button>
+              </div>
+              <div className="profile-action profile-logout">
+                <button
+                  className="logout-btn"
+                  onClick={() => {
+                    setShowProfile(false);
+                    onLogout();
+                  }}
+                >
+                  🚪 Logout
                 </button>
               </div>
             </div>
@@ -1099,6 +1114,7 @@ function Header({ bins, darkMode, onToggleDark, wsStatus }) {
  *  5. Unmount                  → closes the WebSocket cleanly
  */
 export default function App() {
+  const { user, token, logout, loading: authLoading } = useAuth();
   const [bins, setBins] = useState([]);
   const [history, setHistory] = useState([]);
   const [selectedBin, setSelectedBin] = useState(null);
@@ -1106,7 +1122,7 @@ export default function App() {
     () => localStorage.getItem("dark") === "true",
   );
   const [wsStatus, setWsStatus] = useState("connecting");
-  const [analyticsKey, setAnalyticsKey] = useState(0); // bumped on every WS update
+  const [analyticsKey, setAnalyticsKey] = useState(0);
   const wsRef = useRef(null);
 
   // Apply dark mode class to <html>
@@ -1118,13 +1134,15 @@ export default function App() {
   // Initial REST fetch
   const fetchBins = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/api/bins`);
+      const res = await fetch(`${API_URL}/api/bins`, {
+        headers: authHeaders(token),
+      });
       const json = await res.json();
       if (json.bins) setBins(json.bins);
     } catch {
       /* server may be starting */
     }
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     fetchBins();
@@ -1168,13 +1186,29 @@ export default function App() {
   const openDetail = async (bin) => {
     setSelectedBin(bin);
     try {
-      const res = await fetch(`${API_URL}/api/bins/${bin.id}`);
+      const res = await fetch(`${API_URL}/api/bins/${bin.id}`, {
+        headers: authHeaders(token),
+      });
       const json = await res.json();
       setHistory(json.history || []);
     } catch {
       setHistory([]);
     }
   };
+
+  // Show nothing while checking auth session
+  if (authLoading) {
+    return (
+      <div className="auth-loading">
+        <div className="pulse-ring" />
+      </div>
+    );
+  }
+
+  // Show login page if not authenticated
+  if (!user) {
+    return <LoginPage />;
+  }
 
   return (
     <div className={`app ${darkMode ? "dark" : ""}`}>
@@ -1183,6 +1217,8 @@ export default function App() {
         darkMode={darkMode}
         onToggleDark={() => setDarkMode((p) => !p)}
         wsStatus={wsStatus}
+        user={user}
+        onLogout={logout}
       />
 
       <main className="main">
