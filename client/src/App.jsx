@@ -727,6 +727,8 @@ function CompartmentPanel({ label, data, darkMode }) {
 function BinCard({ bin, onClick }) {
   const dryPct = bin?.dry?.fill_level_percent ?? null;
   const wetPct = bin?.wet?.fill_level_percent ?? null;
+  const count = (dryPct !== null ? 1 : 0) + (wetPct !== null ? 1 : 0);
+  const avgPct = count > 0 ? ((dryPct ?? 0) + (wetPct ?? 0)) / count : 0;
   const maxPct = Math.max(dryPct ?? 0, wetPct ?? 0);
   const isAlert = maxPct >= ALERT_THRESHOLD;
 
@@ -748,14 +750,14 @@ function BinCard({ bin, onClick }) {
       </div>
 
       <div className="bin-card-footer">
-        <span className="overall-label">Max fill</span>
+        <span className="overall-label">Avg fill</span>
         <div className="overall-bar-wrap">
           <div
-            className={`overall-bar ${getLevel(maxPct)}`}
-            style={{ width: `${maxPct}%` }}
+            className={`overall-bar ${getLevel(avgPct)}`}
+            style={{ width: `${avgPct}%` }}
           />
         </div>
-        <span className="overall-pct">{maxPct.toFixed(0)}%</span>
+        <span className="overall-pct">{avgPct.toFixed(0)}%</span>
       </div>
     </div>
   );
