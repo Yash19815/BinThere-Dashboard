@@ -73,11 +73,12 @@ function linearPath(points) {
  * dot markers at each data point, a dashed vertical crosshair on hover, and a
  * floating tooltip showing the date label + individual counts.
  *
- * @param {{ binId: number, refreshKey: number }} props
+ * @param {{ binId: number, refreshKey: number, token: string|null }} props
  *   binId      – Database ID of the bin to fetch analytics for
  *   refreshKey – Monotonically increasing counter; increment to trigger a refetch
+ *   token      – JWT auth token for the Authorization header
  */
-function AnalyticsSection({ binId, refreshKey }) {
+function AnalyticsSection({ binId, refreshKey, token }) {
   const [data, setData] = useState(null);
   const [range, setRange] = useState(7);
   const [loading, setLoading] = useState(false);
@@ -94,6 +95,7 @@ function AnalyticsSection({ binId, refreshKey }) {
     try {
       const res = await fetch(
         `${API_URL}/api/bins/${binId}/analytics?range=${range}`,
+        { headers: authHeaders(token) },
       );
       const json = await res.json();
       if (json.status === "success") setData(json);
@@ -102,7 +104,7 @@ function AnalyticsSection({ binId, refreshKey }) {
     } finally {
       setLoading(false);
     }
-  }, [binId, range, refreshKey]);
+  }, [binId, range, refreshKey, token]);
 
   useEffect(() => {
     fetchData();
@@ -1246,7 +1248,11 @@ export default function App() {
           </div>
         ) : (
           <>
-            <AnalyticsSection binId={1} refreshKey={analyticsKey} />
+            <AnalyticsSection
+              binId={1}
+              refreshKey={analyticsKey}
+              token={token}
+            />
             <div className="bin-grid">
               {bins.map((bin) => (
                 <BinCard
