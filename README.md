@@ -4,13 +4,17 @@ A real-time web dashboard for monitoring dustbin fill levels via ESP32 ultrasoni
 
 ## ✨ Features
 
+- **Secure login** — JWT-based authentication with bcrypt password hashing
 - **Real-time fill levels** — WebSocket push on every sensor reading
 - **Dual-compartment monitoring** — Dry 🌫 and Wet 💧 waste, each with vertical fill indicator
+- **Average fill bar** — Card footer shows average fill of both compartments
 - **Color-coded status** — Green → Yellow → Orange → Red as bin fills
 - **Notification alerts** — Bell badge when any compartment exceeds 80%
 - **History modal** — Click a bin card to see a chart + table of last 50 readings
+- **Analytics chart** — Daily fill-cycle trend graph (7 / 14 / 30 / 90 day range)
+- **Toast notifications** — Login, logout, and error feedback via react-hot-toast
 - **Dark mode** — Toggle in the profile dropdown, persisted across sessions
-- **Persistent storage** — SQLite DB stores all measurements
+- **Persistent storage** — SQLite DB stores all measurements and fill cycle events
 - **Auto-reconnect** — WebSocket reconnects automatically on network loss
 - **No hardware required to test** — included PowerShell simulation script
 
@@ -20,27 +24,29 @@ A real-time web dashboard for monitoring dustbin fill levels via ESP32 ultrasoni
 
 ```
 demo-ultrasonic/
-├── package.json          ← Root: run both servers with one command
+├── package.json              ← Root: run both servers with one command
 │
-├── server/               ← Node.js backend
-│   ├── server.js         ← Express + SQLite + WebSocket
-│   ├── bins.db           ← SQLite database (auto-created)
+├── server/                   ← Node.js backend
+│   ├── server.js             ← Express + SQLite + WebSocket + Auth
+│   ├── bins.db               ← SQLite database (auto-created)
 │   ├── package.json
-│   └── .env              ← PORT, DB_PATH
+│   └── .env                  ← PORT, DB_PATH, JWT_SECRET, …
 │
-├── client/               ← React frontend (Vite)
+├── client/                   ← React frontend (Vite)
 │   ├── src/
-│   │   ├── App.jsx       ← Full dashboard (Header, BinCard, Modal...)
-│   │   └── App.css       ← Design system (light + dark themes)
+│   │   ├── App.jsx           ← Dashboard (Header, BinCard, Analytics, Modal…)
+│   │   ├── App.css           ← Design system (light + dark themes)
+│   │   ├── AuthContext.jsx   ← Global auth state (login / logout / rehydration)
+│   │   └── LoginPage.jsx     ← Full-screen login form
 │   ├── package.json
-│   └── .env              ← VITE_WS_URL, VITE_API_URL
+│   └── .env                  ← VITE_WS_URL, VITE_API_URL
 │
-├── ESP32_SAMPLE/         ← Arduino sketch
-│   ├── ESP32_SAMPLE.ino  ← Reads 2 sensors, POSTs to server
-│   ├── config.h          ← WiFi credentials + pin config (create from .example)
-│   └── config.h.example  ← Template
+├── ESP32_SAMPLE/             ← Arduino sketch
+│   ├── ESP32_SAMPLE.ino      ← Reads 2 sensors, POSTs to server
+│   ├── config.h              ← WiFi credentials + pin config (create from .example)
+│   └── config.h.example      ← Template
 │
-├── test-sensor.ps1       ← Simulates ESP32 sensor data (Windows)
+├── test-sensor.ps1           ← Simulates ESP32 sensor data (Windows)
 └── .gitignore
 ```
 
@@ -67,10 +73,16 @@ npm run dev
 
 This starts:
 
-- **Backend** on `http://localhost:3001` (green prefix in terminal)
-- **Frontend** on `http://localhost:5173` (blue prefix in terminal)
+- **Backend** on `http://localhost:3001`
+- **Frontend** on `http://localhost:5173`
 
-Then open **http://localhost:5173** in your browser.
+Then open **http://localhost:5173** and log in with the default credentials:
+
+| Username | Password   |
+| -------- | ---------- |
+| `admin`  | `admin123` |
+
+> The default admin account is created automatically on first startup if no users exist.
 
 ---
 
@@ -81,7 +93,17 @@ Then open **http://localhost:5173** in your browser.
 ```env
 PORT=3001
 DB_PATH=./bins.db
+
+# Auth
+JWT_SECRET=change_this_to_a_long_random_secret
+JWT_EXPIRES_IN=7d
+
+# Default admin account (auto-created on first startup)
+DEFAULT_ADMIN_USERNAME=admin
+DEFAULT_ADMIN_PASSWORD=admin123
 ```
+
+> **⚠️ Before deploying:** Set a strong `JWT_SECRET` and change `DEFAULT_ADMIN_PASSWORD`.
 
 ### Frontend (`client/.env`)
 
@@ -117,27 +139,40 @@ Edit `config.h`:
 ```cpp
 #define WIFI_SSID     "Your_WiFi_Name"
 #define WIFI_PASSWORD "Your_WiFi_Password"
-#define SERVER_IP     "192.168.1.100"   // your PC's IP (run: ipconfig)
+#define SERVER_IP     "192.168.1.11"   // your PC's IP — run: ipconfig
 #define SERVER_PORT   "3001"
 ```
 
-Upload `ESP32_SAMPLE.ino` to your board via Arduino IDE. The ESP32 will POST to `/api/sensor-data` every second.
+> **Finding your IP:** Run `ipconfig` in Command Prompt and look for the **IPv4 Address** under your WiFi adapter.
+
+Upload `ESP32_SAMPLE.ino` via Arduino IDE. The ESP32 posts to `/api/sensor-data` every 10 seconds.
 
 > **Upload tip:** If upload fails, hold the **BOOT** button on the ESP32 while the IDE shows `Connecting...`
+
+> **Note:** The ESP32 posts directly to the backend without authentication. Sensor data is always stored even when no user is logged in to the dashboard.
 
 ---
 
 ## 🌐 API Reference
 
-### Endpoints
+### Authentication (public — no token required)
+
+| Method | Path                 | Description                      |
+| ------ | -------------------- | -------------------------------- |
+| `POST` | `/api/auth/login`    | Login → returns JWT token        |
+| `POST` | `/api/auth/register` | Register new user → returns JWT  |
+| `GET`  | `/api/auth/me`       | Verify token, return user info   |
+| `POST` | `/api/sensor-data`   | ESP32 sensor readings (no token) |
+
+### Protected endpoints (require `Authorization: Bearer <token>`)
 
 | Method | Path                        | Description                       |
 | ------ | --------------------------- | --------------------------------- |
 | `GET`  | `/api/health`               | Health check                      |
 | `GET`  | `/api/bins`                 | All bins with current fill levels |
 | `GET`  | `/api/bins/:id`             | Single bin + last 50 measurements |
+| `GET`  | `/api/bins/:id/analytics`   | Daily fill-cycle chart data       |
 | `POST` | `/api/bins/:id/measurement` | New measurement (REST)            |
-| `POST` | `/api/sensor-data`          | Legacy ESP32 endpoint             |
 
 ### ESP32 → POST `/api/sensor-data`
 
@@ -145,15 +180,7 @@ Upload `ESP32_SAMPLE.ino` to your board via Arduino IDE. The ESP32 will POST to 
 { "sensor1": 12.5, "sensor2": 38.0 }
 ```
 
-`sensor1` → Dry Waste, `sensor2` → Wet Waste. Fill level computed from `max_height_cm` (default 50 cm).
-
-### REST → POST `/api/bins/1/measurement`
-
-```json
-{ "raw_distance_cm": 12.5, "compartment": "dry" }
-```
-
-Or send `fill_level_percent` directly if already computed on-device.
+`sensor1` → Dry Waste, `sensor2` → Wet Waste. Fill level is computed from `max_height_cm` (default 50 cm).
 
 ### WebSocket Events (`ws://localhost:3001`)
 
@@ -163,9 +190,6 @@ Or send `fill_level_percent` directly if already computed on-device.
 ```
 
 ---
-## User login/Logout with Toast notification
-Default credential for login are ```admin/admin123```
-
 
 ## 🧪 Testing Without Hardware
 
@@ -185,20 +209,22 @@ Invoke-RestMethod -Uri http://localhost:3001/api/sensor-data -Method POST `
 
 ## 🔧 Troubleshooting
 
-| Problem                      | Fix                                                            |
-| ---------------------------- | -------------------------------------------------------------- |
-| Port 3001 already in use     | `netstat -ano \| findstr :3001` → `taskkill /PID <pid> /F`     |
-| WebSocket disconnected       | Backend not running. Run `npm run dev` from root               |
-| Bin card shows "No data yet" | Send a test reading with `test-sensor.ps1`                     |
-| ESP32 won't upload           | Hold **BOOT** during `Connecting...` phase in Arduino IDE      |
-| ESP32 can't reach server     | Check `SERVER_IP` in `config.h` matches your PC's IPv4 address |
-| WiFi won't connect           | Use 2.4GHz — ESP32 doesn't support 5GHz networks               |
+| Problem                        | Fix                                                                      |
+| ------------------------------ | ------------------------------------------------------------------------ |
+| Port 3001 already in use       | `netstat -ano \| findstr :3001` → `taskkill /PID <pid> /F`               |
+| WebSocket disconnected         | Backend not running. Run `npm run dev` from root                         |
+| Bin card shows "No data yet"   | Send a test reading with `test-sensor.ps1`                               |
+| Analytics chart not showing    | Make sure you're logged in — chart data requires authentication          |
+| ESP32 `POST Error: -1`         | `SERVER_IP` in `config.h` doesn't match your PC's current IPv4 address   |
+| ESP32 won't upload             | Hold **BOOT** during `Connecting...` phase in Arduino IDE                |
+| WiFi won't connect             | Use 2.4 GHz — ESP32 doesn't support 5 GHz networks                       |
+| Login fails with correct creds | Restart the server — new packages (bcryptjs/jsonwebtoken) must be loaded |
 
 ---
 
 ## 🗄️ Database Management
 
-The SQLite database (`server/bins.db`) stores all measurements and fill cycle records.
+The SQLite database (`server/bins.db`) stores all measurements, fill cycle events, and user accounts.
 
 ### Clear fill cycle history (analytics chart only)
 
@@ -219,13 +245,15 @@ node -e "import('better-sqlite3').then(({default:DB})=>{const db=new DB('./bins.
 
 ## 🛠️ Tech Stack
 
-| Layer       | Technology                        |
-| ----------- | --------------------------------- |
-| Frontend    | React 18, Vite, CSS Variables     |
-| Backend     | Node.js, Express, ws (WebSocket)  |
-| Database    | SQLite via `better-sqlite3`       |
-| Hardware    | ESP32, HC-SR04 ultrasonic sensors |
-| Dev tooling | concurrently                      |
+| Layer       | Technology                                   |
+| ----------- | -------------------------------------------- |
+| Frontend    | React 18, Vite, CSS Variables                |
+| Auth (UI)   | AuthContext (React Context), react-hot-toast |
+| Backend     | Node.js, Express, ws (WebSocket)             |
+| Auth (API)  | jsonwebtoken (JWT), bcryptjs                 |
+| Database    | SQLite via `better-sqlite3`                  |
+| Hardware    | ESP32, HC-SR04 ultrasonic sensors            |
+| Dev tooling | concurrently, nodemon                        |
 
 ---
 
