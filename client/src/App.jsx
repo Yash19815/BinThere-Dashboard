@@ -29,7 +29,8 @@ import { useAuth } from "./AuthContext.jsx";
 import LoginPage from "./LoginPage.jsx";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:3001";
+const WS_URL =
+  import.meta.env.VITE_WS_URL || `ws://${window.location.hostname}:3001`;
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 const ALERT_THRESHOLD = 80; // % — show notification
 
