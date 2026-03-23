@@ -1,142 +1,139 @@
-    # BinThere — Smart Dustbin Monitor
+# BinThere — Smart Dustbin Monitor
 
-    A real-time web dashboard for monitoring dustbin fill levels via ESP32 ultrasonic sensors. Each bin has two compartments (**Dry Waste** and **Wet Waste**), each measured by a separate HC-SR04 sensor.
+A real-time web dashboard for monitoring dustbin fill levels via ESP32 ultrasonic sensors. Each bin has two compartments (**Dry Waste** and **Wet Waste**), each measured by a separate HC-SR04 sensor.
 
-    ## ✨ Features
+## ✨ Features
 
-    - **Secure login** — JWT-based authentication with bcrypt password hashing
-    - **Real-time fill levels** — WebSocket push on every sensor reading
-    - **Dual-compartment monitoring** — Dry 🌫 and Wet 💧 waste, each with vertical fill indicator
-    - **Average fill bar** — Card footer shows average fill of both compartments
-    - **Color-coded status** — Green → Yellow → Orange → Red as bin fills
-    - **Notification alerts** — Bell badge when any compartment exceeds 80%
-    - **History modal** — Click a bin card to see a chart + table of last 50 readings
-    - **Analytics chart** — Daily fill-cycle trend graph (7 / 14 / 30 day range)
-    - **Excel export** — Downloads Bins, Measurements, Fill Cycles, and Summary in IST with optional date-range filtering
-    - **Toast notifications** — Login, logout, and error feedback via react-hot-toast
-    - **Dark mode** — Toggle in the profile dropdown, persisted across sessions
-    - **Persistent storage** — SQLite DB stores all measurements, fill cycle events, and users
-    - **Auto-reconnect** — WebSocket reconnects automatically on network loss
-    - **No hardware required to test** — included PowerShell simulation script
-
-    ---
-
-    ## 📁 Project Structure
-
-    ```text
-    demo-ultrasonic/
-    ├── package.json              ← Root: run both servers with one command
-    ├── README.md
-    ├── test-sensor.ps1
-    │
-    ├── client/                   ← React frontend (Vite)
-    │   ├── index.html
-    │   ├── package.json
-    │   ├── tsconfig.json
-    │   ├── vite.config.js
-    │   ├── public/
-    │   └── src/
-    │       ├── App.jsx           ← Dashboard (Header, BinCard, Analytics, Modal…)
-    │       ├── App.css           ← Design system (light + dark themes)
-    │       ├── AuthContext.jsx   ← Global auth state (login / logout / rehydration)
-    │       ├── LoginPage.jsx     ← Full-screen login form
-    │       ├── main.jsx
-    │       ├── main.ts
-    │       ├── style.css
-    │       ├── counter.ts
-    │       └── components/
-    │           └── ExportToExcel.jsx
-    │
-    ├── server/                   ← Node.js backend
-    │   ├── server.js             ← Express + SQLite + WebSocket + Auth
-    │   ├── exportRoutes.js       ← Excel export route (IST filters + formatting)
-    │   ├── schema.sql            ← SQL schema reference
-    │   ├── bins.db               ← SQLite database (auto-created)
-    │   ├── package.json
-    │   └── .env                  ← PORT, HOST, DB_PATH, JWT_SECRET, DEVICE_API_KEY…
-    │
-    ├── ESP32_SAMPLE/             ← Full worker sketch (UART + servos + soil + dashboard post)
-    │   ├── ESP32_SAMPLE.ino
-    │   ├── config.h              ← WiFi credentials + pin config (create from .example)
-    │   └── config.h.example      ← Template
-    │
-    ├── ESP32_SINGLE_SENSOR/      ← Minimal single-sensor sketch (POST /api/bins/1/measurement)
-    │   └── ESP32_SINGLE_SENSOR.ino
-    │
-    └── python_scripts/
-        ├── binthere_master.py
-        └── requirements.txt
-    ```
+- **Secure login** — JWT-based authentication with bcrypt password hashing
+- **Real-time fill levels** — WebSocket push on every sensor reading
+- **Dual-compartment monitoring** — Dry 🌫 and Wet 💧 waste, each with vertical fill indicator
+- **Average fill bar** — Card footer shows average fill of both compartments
+- **Color-coded status** — Green → Yellow → Orange → Red as bin fills
+- **Notification alerts** — Bell badge when any compartment exceeds 80%
+- **History modal** — Click a bin card to see a chart + table of last 50 readings
+- **Analytics chart** — Daily fill-cycle trend graph (7 / 14 / 30 day range)
+- **Excel export** — Downloads Bins, Measurements, Fill Cycles, and Summary in IST with optional date-range filtering
+- **Toast notifications** — Login, logout, and error feedback via react-hot-toast
+- **Dark mode** — Toggle in the profile dropdown, persisted across sessions
+- **Persistent storage** — SQLite DB stores all measurements, fill cycle events, and users
+- **Auto-reconnect** — WebSocket reconnects automatically on network loss
+- **No hardware required to test** — included PowerShell simulation script
 
     ---
 
-    ## 🚀 Quick Start
+## 📁 Project Structure
+```
+demo-ultrasonic/
+├── package.json              ← Root: run both servers with one command
+├── README.md
+├── test-sensor.ps1
+│
+├── client/                   ← React frontend (Vite)
+│   ├── index.html
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── vite.config.js
+│   ├── public/
+│   └── src/
+│       ├── App.jsx           ← Dashboard (Header, BinCard, Analytics, Modal…)
+│       ├── App.css           ← Design system (light + dark themes)
+│       ├── AuthContext.jsx   ← Global auth state (login / logout / rehydration)
+│       ├── LoginPage.jsx     ← Full-screen login form
+│       ├── main.jsx
+│       ├── main.ts
+│       ├── style.css
+│       ├── counter.ts
+│       └── components/
+│           └── ExportToExcel.jsx
+│
+├── server/                   ← Node.js backend
+│   ├── server.js             ← Express + SQLite + WebSocket + Auth
+│   ├── exportRoutes.js       ← Excel export route (IST filters + formatting)
+│   ├── schema.sql            ← SQL schema reference
+│   ├── bins.db               ← SQLite database (auto-created)
+│   ├── package.json
+│   └── .env                  ← PORT, HOST, DB_PATH, JWT_SECRET, DEVICE_API_KEY…
+│
+├── ESP32_SAMPLE/             ← Full worker sketch (UART + servos + soil + dashboard post)
+│   ├── ESP32_SAMPLE.ino
+│   ├── config.h              ← WiFi credentials + pin config (create from .example)
+│   └── config.h.example      ← Template
+│
+├── ESP32_SINGLE_SENSOR/      ← Minimal single-sensor sketch (POST /api/bins/1/measurement)
+│   └── ESP32_SINGLE_SENSOR.ino
+│
+└── python_scripts/
+    ├── binthere_master.py
+    └── requirements.txt
+```
 
-    ### Prerequisites
+## 🚀 Quick Start
 
-    - **Node.js** v18+
-    - **Arduino IDE** (only for uploading to ESP32)
+### Prerequisites
 
-    ### 1 — Install all dependencies
+- **Node.js** v18+
+- **Arduino IDE** (only for uploading to ESP32)
 
-    ```bash
-    npm run install:all
-    ```
+### 1 — Install all dependencies
 
-    ### 2 — Start both servers together
+```bash
+npm run install:all
+```
 
-    ```bash
-    npm run dev
-    ```
+### 2 — Start both servers together
 
-    This starts:
+```bash
+npm run dev
+```
 
-    - **Backend** on `http://localhost:3001`
-    - **Frontend** on `http://localhost:5173`
+This starts:
 
-    Then open **http://localhost:5173** and log in with the default credentials:
+- **Backend** on `http://localhost:3001`
+- **Frontend** on `http://localhost:5173`
 
-    | Username | Password   |
-    | -------- | ---------- |
-    | `admin`  | `admin123` |
+Then open **http://localhost:5173** and log in with the default credentials:
 
-    > The default admin account is created automatically on first startup if no users exist.
+| Username | Password   |
+| -------- | ---------- |
+| `admin`  | `admin123` |
 
-    ---
+> The default admin account is created automatically on first startup if no users exist.
 
-    ## ⚙️ Configuration
+---
 
-    ### Backend (`server/.env`)
+## ⚙️ Configuration
 
-    ```env
-    PORT=3001
-    HOST=0.0.0.0
-    DB_PATH=./bins.db
+### Backend (`server/.env`)
 
-    # Auth
-    JWT_SECRET=change_this_to_a_long_random_secret
-    JWT_EXPIRES_IN=7d
+```env
+PORT=3001
+HOST=0.0.0.0
+DB_PATH=./bins.db
 
-    # Default admin account (auto-created on first startup)
-    DEFAULT_ADMIN_USERNAME=admin
-    DEFAULT_ADMIN_PASSWORD=admin123
+# Auth
+JWT_SECRET=change_this_to_a_long_random_secret
+JWT_EXPIRES_IN=7d
 
-    # Optional hardware key (for protected routes from device)
-    DEVICE_API_KEY=binthere-esp32-device-key-2026
-    ```
+# Default admin account (auto-created on first startup)
+DEFAULT_ADMIN_USERNAME=admin
+DEFAULT_ADMIN_PASSWORD=admin123
 
-    > **⚠️ Before deploying:** Set a strong `JWT_SECRET` and change `DEFAULT_ADMIN_PASSWORD`.
+# Optional hardware key (for protected routes from device)
+DEVICE_API_KEY=binthere-esp32-device-key-2026
+```
 
-    ### Frontend (`client/.env`)
+> **⚠️ Before deploying:** Set a strong `JWT_SECRET` and change `DEFAULT_ADMIN_PASSWORD`.
 
-    ```env
-    VITE_WS_URL=ws://localhost:3001
-    VITE_API_URL=http://localhost:3001
-    ```
+### Frontend (`client/.env`)
 
-    > When deploying, replace `localhost` with your server's IP/hostname in both files.
+```env
+VITE_WS_URL=ws://localhost:3001
+VITE_API_URL=http://localhost:3001
+```
 
-    ---
+> When deploying, replace `localhost` with your server's IP/hostname in both files.
+
+---
 
 # ESP32 Pin Connection Reference
 
