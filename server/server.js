@@ -7,6 +7,7 @@
  *  - Pushes real-time updates to all connected WebSocket clients
  *  - Exposes a REST API consumed by the React dashboard
  *  - JWT-based authentication (login / register / me endpoints)
+ *  - Excel export functionality for all database data
  *
  * Environment variables (set in server/.env):
  *  PORT                   – HTTP + WS port (default: 3001)
@@ -27,6 +28,7 @@
  *  GET  /api/bins/:id/analytics        – Daily fill-cycle counts (?range=7|14|30)
  *  POST /api/bins/:id/measurement      – Record a reading for one compartment
  *  POST /api/sensor-data               – Legacy dual-sensor endpoint
+ *  GET  /api/export/excel              – Export all data to Excel
  */
 
 import express from "express";
@@ -39,6 +41,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import exportRoutes from './exportRoutes.js';
 
 dotenv.config();
 
@@ -791,9 +794,14 @@ app.post("/api/sensor-data", (req, res) => {
   res.json({ status: "success", message: "Data received", data: updatedBin });
 });
 
+// ── Excel Export Routes ──────────────────────────────────────────────────────
+app.use('/api', exportRoutes);
+
 // ── Start ────────────────────────────────────────────────────────────────────
-server.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
-  console.log(`✅ WebSocket ready at ws://localhost:${PORT}`);
+const HOST = process.env.HOST || "0.0.0.0";
+server.listen(PORT, HOST, () => {
+  console.log(`✅ Server running at http://${HOST}:${PORT}`);
+  console.log(`✅ WebSocket ready at ws://${HOST}:${PORT}`);
   console.log(`✅ Database: ${DB_PATH}`);
+  console.log(`📊 Export endpoint: http://${HOST}:${PORT}/api/export/excel`);
 });

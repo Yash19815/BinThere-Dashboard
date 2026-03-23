@@ -22,31 +22,57 @@
  *   3. Flash and open Serial Monitor at 115200 baud.
  */
 
-#include <WiFi.h>
 #include <HTTPClient.h>
+#include <WiFi.h>
 
-// ── Configuration (edit these) ────────────────────────────────────────────────
+// ── Configuration (edit these)
+// ────────────────────────────────────────────────
 
-const char* WIFI_SSID     = "Airtel_vamika_2024";
-const char* WIFI_PASSWORD = "vamika_2024";
+const char *WIFI_SSID = "Airtel_vamika_2024";
+const char *WIFI_PASSWORD = "vamika_2024";
 
-const char* SERVER_IP   = "192.168.1.6";  // Same IP as your dashboard server
-const int   SERVER_PORT = 3001;
-const char* COMPARTMENT = "dry";           // "dry" or "wet"
+const char *SERVER_IP = "192.168.1.8"; // Same IP as your dashboard server
+const int SERVER_PORT = 3001;
+const char *COMPARTMENT = "dry"; // "dry" or "wet"
 
 // Static device key — must match DEVICE_API_KEY in server/.env
 // No login flow needed; the server accepts this header from hardware devices.
-const char* DEVICE_API_KEY = "binthere-esp32-device-key-2026";
+const char *DEVICE_API_KEY = "binthere-esp32-device-key-2026";
 
-// ── Pin numbers ───────────────────────────────────────────────────────────────
+// ── Pin numbers
+// ───────────────────────────────────────────────────────────────
 const int TRIG_PIN = 18;
 const int ECHO_PIN = 19;
 
-// ── Timing ────────────────────────────────────────────────────────────────────
-const unsigned long READ_INTERVAL = 3000;  // Send a reading every 3 seconds
+// ── Timing
+// ────────────────────────────────────────────────────────────────────
+const unsigned long READ_INTERVAL = 3000; // Send a reading every 3 seconds
 
-// ── Internal state ────────────────────────────────────────────────────────────
+// ── Internal state
+// ────────────────────────────────────────────────────────────
 unsigned long lastReadTime = 0;
+
+/** Converts Wi-Fi status code to a readable label for serial diagnostics. */
+const char *wifiStatusToText(wl_status_t status) {
+  switch (status) {
+  case WL_IDLE_STATUS:
+    return "IDLE";
+  case WL_NO_SSID_AVAIL:
+    return "NO_SSID";
+  case WL_SCAN_COMPLETED:
+    return "SCAN_DONE";
+  case WL_CONNECTED:
+    return "CONNECTED";
+  case WL_CONNECT_FAILED:
+    return "CONNECT_FAILED";
+  case WL_CONNECTION_LOST:
+    return "CONNECTION_LOST";
+  case WL_DISCONNECTED:
+    return "DISCONNECTED";
+  default:
+    return "UNKNOWN";
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -66,7 +92,8 @@ float getDistance() {
   long duration = pulseIn(ECHO_PIN, HIGH, 30000);
 
   if (duration == 0) {
-    Serial.println("[WARN] Ultrasonic timeout — sensor out of range or unplugged.");
+    Serial.println(
+        "[WARN] Ultrasonic timeout — sensor out of range or unplugged.");
     return 0.0;
   }
 
@@ -80,7 +107,22 @@ float getDistance() {
  */
 void sendToServer(float distanceCm) {
   // Build URL: http://192.168.1.6:3001/api/bins/1/measurement
-  String url = String("http://") + SERVER_IP + ":" + SERVER_PORT + "/api/bins/1/measurement";
+  String url = String("http://") + SERVER_IP + ":" + SERVER_PORT +
+               "/api/bins/1/measurement";
+
+  wl_status_t status = WiFi.status();
+  Serial.print("[NET] URL: ");
+  Serial.println(url);
+  Serial.print("[NET] WiFi.status(): ");
+  Serial.print((int)status);
+  Serial.print(" (");
+  Serial.print(wifiStatusToText(status));
+  Serial.println(")");
+  Serial.print("[NET] ESP32 IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.print("[NET] RSSI: ");
+  Serial.print(WiFi.RSSI());
+  Serial.println(" dBm");
 
   HTTPClient http;
   http.begin(url);
@@ -91,15 +133,25 @@ void sendToServer(float distanceCm) {
   String payload = "{\"raw_distance_cm\":" + String(distanceCm, 2) +
                    ",\"compartment\":\"" + COMPARTMENT + "\"}";
 
-  Serial.print("[POST] → "); Serial.println(payload);
+  Serial.print("[POST] → ");
+  Serial.println(payload);
 
   int code = http.POST(payload);
 
   if (code > 0) {
-    Serial.print("[POST] Response: "); Serial.println(code);
+    Serial.print("[POST] Response: ");
+    Serial.println(code);
   } else {
-    Serial.print("[ERROR] POST failed, code: "); Serial.println(code);
+    Serial.print("[ERROR] POST failed, code: ");
+    Serial.println(code);
+    Serial.print("[ERROR] Message: ");
     Serial.println(http.errorToString(code));
+    Serial.print("[ERROR] Target URL: ");
+    Serial.println(url);
+    Serial.print("[ERROR] Check server reachability from this network to ");
+    Serial.print(SERVER_IP);
+    Serial.print(":");
+    Serial.println(SERVER_PORT);
   }
 
   http.end();
@@ -116,7 +168,8 @@ void setup() {
   pinMode(ECHO_PIN, INPUT);
 
   // Connect to Wi-Fi
-  Serial.print("[WiFi] Connecting to "); Serial.print(WIFI_SSID);
+  Serial.print("[WiFi] Connecting to ");
+  Serial.print(WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -130,15 +183,19 @@ void setup() {
 
 void loop() {
   // Only run every READ_INTERVAL milliseconds (non-blocking)
-  if (millis() - lastReadTime < READ_INTERVAL) return;
+  if (millis() - lastReadTime < READ_INTERVAL)
+    return;
   lastReadTime = millis();
 
   // 1. Read the sensor
   float distance = getDistance();
-  Serial.print("[SENSOR] Distance: "); Serial.print(distance); Serial.println(" cm");
+  Serial.print("[SENSOR] Distance: ");
+  Serial.print(distance);
+  Serial.println(" cm");
 
   // 2. Skip invalid reads to avoid polluting the dashboard
-  if (distance <= 0) return;
+  if (distance <= 0)
+    return;
 
   // 3. Reconnect Wi-Fi if dropped
   if (WiFi.status() != WL_CONNECTED) {

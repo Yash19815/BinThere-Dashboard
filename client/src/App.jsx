@@ -27,6 +27,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import "./App.css";
 import { useAuth } from "./AuthContext.jsx";
 import LoginPage from "./LoginPage.jsx";
+import ExportToExcel from './components/ExportToExcel';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const WS_URL =
@@ -639,7 +640,24 @@ function timeAgo(isoString) {
 }
 
 /**
- * Formats an ISO-8601 timestamp as a localised HH:MM:SS string (en-IN locale).
+ * Formats an ISO-8601 timestamp as an IST date string (YYYY-MM-DD).
+ * Used in the HistoryModal measurement table.
+ *
+ * @param {string|null} isoString
+ * @returns {string} e.g. "2026-03-23" or "—" if null
+ */
+function formatDate(isoString) {
+  if (!isoString) return "—";
+  return new Date(isoString).toLocaleDateString("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+}
+
+/**
+ * Formats an ISO-8601 timestamp as an IST HH:MM:SS string (24-hour clock).
  * Used in the HistoryModal measurement table.
  *
  * @param {string|null} isoString
@@ -647,10 +665,12 @@ function timeAgo(isoString) {
  */
 function formatTime(isoString) {
   if (!isoString) return "—";
-  return new Date(isoString).toLocaleTimeString("en-IN", {
+  return new Date(isoString).toLocaleTimeString("en-GB", {
+    timeZone: "Asia/Kolkata",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
+    hour12: false,
   });
 }
 
@@ -876,6 +896,7 @@ function HistoryModal({ bin, history, onClose }) {
           <table className="history-table">
             <thead>
               <tr>
+                <th>Date</th>
                 <th>Time</th>
                 <th>Compartment</th>
                 <th>Distance</th>
@@ -886,6 +907,7 @@ function HistoryModal({ bin, history, onClose }) {
             <tbody>
               {history.slice(0, 30).map((h, i) => (
                 <tr key={i}>
+                  <td>{formatDate(h.timestamp)}</td>
                   <td>{formatTime(h.timestamp)}</td>
                   <td className="cap">{h.compartment}</td>
                   <td>{h.raw_distance_cm} cm</td>
@@ -1234,9 +1256,12 @@ export default function App() {
               Real-time fill levels via ultrasonic sensors
             </p>
           </div>
-          <button className="refresh-btn" onClick={fetchBins} title="Refresh">
-            ↻ Refresh
-          </button>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <ExportToExcel />
+            <button className="refresh-btn" onClick={fetchBins} title="Refresh">
+              ↻ Refresh
+            </button>
+          </div>
         </div>
 
         {bins.length === 0 ? (

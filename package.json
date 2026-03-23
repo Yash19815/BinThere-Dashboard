@@ -8,7 +8,8 @@
     "dev": "concurrently --names \"server,client\" --prefix-colors \"green,blue\" \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
     "start": "concurrently --names \"server,client\" --prefix-colors \"green,blue\" \"npm start --prefix server\" \"npm run dev --prefix client\"",
     "server": "npm run dev --prefix server",
-    "client": "npm run dev --prefix client"
+    "client": "npm run dev --prefix client",
+    "kill-port": "npx kill-port 3001 5173 5174"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

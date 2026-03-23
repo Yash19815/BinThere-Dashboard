@@ -12,6 +12,7 @@ A real-time web dashboard for monitoring dustbin fill levels via ESP32 ultrasoni
 - **Notification alerts** — Bell badge when any compartment exceeds 80%
 - **History modal** — Click a bin card to see a chart + table of last 50 readings
 - **Analytics chart** — Daily fill-cycle trend graph (7 / 14 / 30 / 90 day range)
+- **Excel export** — Downloads Bins, Measurements, and Fill Cycles in IST with optional date-range filtering
 - **Toast notifications** — Login, logout, and error feedback via react-hot-toast
 - **Dark mode** — Toggle in the profile dropdown, persisted across sessions
 - **Persistent storage** — SQLite DB stores all measurements and fill cycle events
@@ -173,6 +174,7 @@ Upload `ESP32_SAMPLE.ino` via Arduino IDE. The ESP32 posts to `/api/sensor-data`
 | `GET`  | `/api/bins/:id`             | Single bin + last 50 measurements |
 | `GET`  | `/api/bins/:id/analytics`   | Daily fill-cycle chart data       |
 | `POST` | `/api/bins/:id/measurement` | New measurement (REST)            |
+| `GET`  | `/api/export/excel`         | Excel export (IST timestamps + optional date range) |
 
 ### ESP32 → POST `/api/sensor-data`
 
@@ -181,6 +183,19 @@ Upload `ESP32_SAMPLE.ino` via Arduino IDE. The ESP32 posts to `/api/sensor-data`
 ```
 
 `sensor1` → Dry Waste, `sensor2` → Wet Waste. Fill level is computed from `max_height_cm` (default 50 cm).
+
+### Excel Export (`GET /api/export/excel`)
+
+Downloads an `.xlsx` file containing:
+
+- `Bins` — bin metadata
+- `Measurements` — sensor readings (with `Date (IST)` + `Time (IST)` in 24-hour format)
+- `Fill Cycles` — fill/empty events (timestamps displayed in IST)
+
+Optional query params (interpreted as IST dates):
+
+- `from=YYYY-MM-DD` — start date (inclusive)
+- `to=YYYY-MM-DD` — end date (inclusive, through `23:59:59`)
 
 ### WebSocket Events (`ws://localhost:3001`)
 
