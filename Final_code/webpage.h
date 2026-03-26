@@ -1,109 +1,554 @@
 #pragma once
 
-const char WS_MONITOR_HTML[] PROGMEM = R"rawliteral(
+const char WS_MONITOR_HTML[] PROGMEM = R"rawhtml(
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BinThere — Serial Monitor</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>BinThere — Monitor</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#0d0d0d;color:#00ff41;font-family:'Courier New',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden}
-  #hdr{background:#111;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1f1f1f;flex-shrink:0}
-  #hdr-left{display:flex;align-items:center;gap:10px}
-  #title{font-size:13px;font-weight:bold;letter-spacing:1px}
-  #ip{font-size:11px;color:#444}
-  #status{display:flex;align-items:center;gap:6px;font-size:11px;color:#666}
-  #dot{width:7px;height:7px;border-radius:50%;background:#ff3333;transition:background .3s}
-  #dot.on{background:#00ff41;box-shadow:0 0 6px #00ff41}
-  #terminal{flex:1;overflow-y:auto;padding:10px 16px;font-size:12px;line-height:1.7}
-  #terminal::-webkit-scrollbar{width:6px}
-  #terminal::-webkit-scrollbar-track{background:#111}
-  #terminal::-webkit-scrollbar-thumb{background:#2a2a2a;border-radius:3px}
-  .ln{white-space:pre-wrap;word-break:break-all;padding:1px 0}
-  .ts{color:#2a2a2a;margin-right:8px;user-select:none}
-  #ftr{background:#111;padding:8px 16px;display:flex;align-items:center;gap:8px;border-top:1px solid #1f1f1f;flex-shrink:0}
-  .btn{background:#161616;color:#00ff41;border:1px solid #2a2a2a;padding:5px 12px;cursor:pointer;font-family:monospace;font-size:11px;border-radius:3px;transition:all .2s}
-  .btn:hover{background:#1e1e1e;border-color:#00ff41}
-  #lc{color:#2a2a2a;font-size:11px;margin-left:auto}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #000000;
+    --surface:   #0a0a0a;
+    --border:    #2a2a2a;
+    --accent:    #58a6ff;
+    --accent2:   #3fb950;
+    --danger:    #ff6b6b;
+    --warn:      #ffd700;
+    --muted:     #aaaaaa;
+    --text:      #ffffff;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    --font-ui:   -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius:    10px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+  }
+
+  /* LOGIN SCREEN */
+  #loginScreen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    background: var(--bg);
+  }
+
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+  }
+
+  .login-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .login-logo .icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+
+  .login-logo h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .login-logo p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .login-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: block;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .login-input-wrap {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .login-input-wrap input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 15px;
+    font-family: var(--font-mono);
+    padding: 12px 44px 12px 14px;
+    outline: none;
+    transition: border-color .2s;
+    letter-spacing: 2px;
+  }
+
+  .login-input-wrap input:focus {
+    border-color: var(--accent);
+  }
+
+  .toggle-pw {
+    position: absolute;
+    right: 12px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    font-size: 16px; padding: 4px;
+    transition: color .2s;
+  }
+
+  .toggle-pw:hover { color: var(--text); }
+
+  .login-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #000000;
+    border: none;
+    border-radius: var(--radius);
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    letter-spacing: 0.3px;
+  }
+
+  .login-btn:hover  { opacity: .88; }
+  .login-btn:active { transform: scale(.98); }
+
+  .login-error {
+    display: none;
+    margin-top: 14px;
+    background: rgba(255,107,107,.12);
+    border: 1px solid rgba(255,107,107,.35);
+    border-radius: var(--radius);
+    color: var(--danger);
+    font-size: 13px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+
+  .shake { animation: shake .4s ease; }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-8px); }
+    40%      { transform: translateX(8px); }
+    60%      { transform: translateX(-5px); }
+    80%      { transform: translateX(5px); }
+  }
+
+  /* MONITOR SCREEN */
+  #monitorScreen {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    gap: 16px;
+  }
+
+  .topbar-left {
+    display: flex; align-items: center; gap: 12px;
+  }
+
+  .topbar-icon {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .topbar h1 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.2px;
+  }
+
+  .topbar-right {
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .status-pill {
+    display: flex; align-items: center; gap: 7px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+    transition: all .3s;
+    min-width: 100px;
+  }
+
+  .status-pill .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background .3s;
+    flex-shrink: 0;
+  }
+
+  .status-pill.connected {
+    border-color: rgba(63,185,80,.4);
+    color: var(--accent2);
+  }
+
+  .status-pill.connected .dot {
+    background: var(--accent2);
+    box-shadow: 0 0 6px var(--accent2);
+    animation: pulse 2s infinite;
+  }
+
+  .status-pill.disconnected {
+    border-color: rgba(255,107,107,.4);
+    color: var(--danger);
+  }
+
+  .status-pill.disconnected .dot {
+    background: var(--danger);
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity: 1; }
+    50%      { opacity: .4; }
+  }
+
+  .btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all .2s;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .btn:hover        { border-color: var(--accent); color: var(--accent); }
+  .btn.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* TERMINAL */
+  #terminal {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    font-family: var(--font-mono);
+    font-size: 20px;
+    line-height: 1.5;
+    background: var(--bg);
+  }
+
+  #terminal::-webkit-scrollbar { width: 6px; }
+  #terminal::-webkit-scrollbar-track { background: transparent; }
+  #terminal::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+  }
+
+  .log-line { display: flex; gap: 10px; }
+
+  .log-ts {
+    color: #ffffff;
+    flex-shrink: 0;
+    user-select: none;
+    font-size: 24px;
+    padding-top: 1px;
+  }
+
+  /* Log colours */
+  .log-line          .log-msg { color: #ffffff;  }
+  .log-line.tof      .log-msg { color: #79c0ff;  }
+  .log-line.ultra    .log-msg { color: #c9e8ff;  }
+  .log-line.mg995    .log-msg { color: #56d364;  }
+  .log-line.sg90     .log-msg { color: #d2a8ff;  }
+  .log-line.soil     .log-msg { color: #ffb347;  }
+  .log-line.wifi     .log-msg { color: #cccccc;  }
+  .log-line.post     .log-msg { color: #56d364;  }
+  .log-line.error    .log-msg { color: #ff6b6b;  }
+  .log-line.power    .log-msg { color: #ffd700;  }
+  .log-line.boot     .log-msg { color: #ffd700;  }
+  .log-line.cycle    .log-msg { color: #56d364;  }
+  .log-line.wsmon    .log-msg { color: #aaaaaa;  }
+
+  .statusbar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 6px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  .statusbar-left { display: flex; gap: 18px; }
 </style>
 </head>
 <body>
-<div id="hdr">
-  <div id="hdr-left">
-    <span id="title">&#x1F5D1; BINTHERE / SERIAL MONITOR</span>
-    <span id="ip"></span>
+
+<div id="loginScreen">
+  <div class="login-card" id="loginCard">
+    <div class="login-logo">
+      <div class="icon">&#x1F5D1;</div>
+      <div>
+        <h1>BinThere</h1>
+        <p>Serial Monitor &#8212; Restricted Access</p>
+      </div>
+    </div>
+
+    <label class="login-label" for="pwInput">Password</label>
+    <div class="login-input-wrap">
+      <input type="password" id="pwInput"
+             placeholder="Enter password"
+             autocomplete="current-password"
+             onkeydown="if(event.key==='Enter') doLogin()"/>
+      <button class="toggle-pw" onclick="togglePw()" title="Show/hide">&#x1F441;</button>
+    </div>
+
+    <button class="login-btn" onclick="doLogin()">Unlock Monitor</button>
+    <div class="login-error" id="loginError">Incorrect password. Try again.</div>
   </div>
-  <div id="status"><div id="dot"></div><span id="stxt">Disconnected</span></div>
 </div>
-<div id="terminal"></div>
-<div id="ftr">
-  <button class="btn" onclick="clearLog()">Clear</button>
-  <button class="btn" id="asBtn" onclick="toggleAS()">Auto-scroll ON</button>
-  <span id="lc">0 lines</span>
+
+<div id="monitorScreen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-icon">&#x1F5D1;</div>
+      <h1>BinThere &#8212; Serial Monitor</h1>
+    </div>
+    <div class="topbar-right">
+      <div class="status-pill disconnected" id="statusPill">
+        <div class="dot"></div>
+        <span id="statusText">Disconnected</span>
+      </div>
+      <button class="btn" onclick="toggleScroll()">
+        <span id="scrollIcon">&#x23EC;</span>
+        <span id="scrollLabel">Auto</span>
+      </button>
+      <button class="btn" onclick="copyLogs()">&#x1F4CB; Copy</button>
+      <button class="btn danger" onclick="clearLogs()">&#x1F5D1; Clear</button>
+      <button class="btn danger" onclick="doLogout()">&#x1F512; Lock</button>
+    </div>
+  </div>
+
+  <div id="terminal"></div>
+
+  <div class="statusbar">
+    <div class="statusbar-left">
+      <span>Lines: <b id="lineCount">0</b></span>
+      <span>Dropped: <b id="dropCount">0</b></span>
+    </div>
+    <span id="lastSeen">&#8212;</span>
+  </div>
 </div>
+
 <script>
-const term=document.getElementById('terminal');
-const dot=document.getElementById('dot');
-const stxt=document.getElementById('stxt');
-const lc=document.getElementById('lc');
-const asBtn=document.getElementById('asBtn');
-document.getElementById('ip').textContent=location.host;
-let autoScroll=true,lineCount=0,ws;
+  const CORRECT_PW  = "binthere2026";
+  const SESSION_KEY = "bt_auth";
+  const MAX_LINES   = 600;
 
-const COLORS={
-  '[ERROR]':'#ff3333','[RETRY]':'#ff8800','[ULTRA]':'#00aaff',
-  '[SOIL]':'#bb88ff','[MG995]':'#ff88aa','[SG90]':'#ffcc00',
-  '[TOF]':'#00ffcc','[WiFi]':'#66ff66','[POST]':'#66ccff',
-  '[BOOT]':'#888','[POWER]':'#888','[CYCLE]':'#aaa',
-  'MICROWAVE':'#ffffff','[WSMON]':'#555555'
-};
+  let ws         = null;
+  let lineCount  = 0;
+  let dropCount  = 0;
+  let autoScroll = true;
+  let logBuffer  = "";
 
-function colorFor(t){
-  for(const[k,v] of Object.entries(COLORS)) if(t.includes(k)) return v;
-  return '#00ff41';
-}
+  function doLogin() {
+    const val = document.getElementById("pwInput").value;
+    if (val === CORRECT_PW) {
+      sessionStorage.setItem(SESSION_KEY, "1");
+      showMonitor();
+    } else {
+      const card = document.getElementById("loginCard");
+      const err  = document.getElementById("loginError");
+      err.style.display = "block";
+      card.classList.remove("shake");
+      void card.offsetWidth;
+      card.classList.add("shake");
+      document.getElementById("pwInput").value = "";
+      document.getElementById("pwInput").focus();
+    }
+  }
 
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+  function doLogout() {
+    sessionStorage.removeItem(SESSION_KEY);
+    if (ws) ws.close();
+    document.getElementById("monitorScreen").style.display = "none";
+    document.getElementById("loginScreen").style.display   = "flex";
+    document.getElementById("pwInput").value = "";
+    document.getElementById("loginError").style.display = "none";
+  }
 
-function appendLine(raw,forceColor){
-  const lines=raw.split('\n');
-  lines.forEach(text=>{
-    if(!text.trim())return;
-    const now=new Date();
-    const ts=now.toTimeString().slice(0,8)+'.'+String(now.getMilliseconds()).padStart(3,'0');
-    const div=document.createElement('div');
-    div.className='ln';
-    div.style.color=forceColor||colorFor(text);
-    div.innerHTML='<span class="ts">'+ts+'</span>'+esc(text);
+  function togglePw() {
+    const inp = document.getElementById("pwInput");
+    inp.type = inp.type === "password" ? "text" : "password";
+  }
+
+  function showMonitor() {
+    document.getElementById("loginScreen").style.display   = "none";
+    document.getElementById("monitorScreen").style.display = "flex";
+    connectWS();
+  }
+
+  if (sessionStorage.getItem(SESSION_KEY) === "1") {
+    document.getElementById("loginScreen").style.display   = "none";
+    document.getElementById("monitorScreen").style.display = "flex";
+    connectWS();
+  }
+
+  function connectWS() {
+    const host = location.hostname;
+    ws = new WebSocket("ws://" + host + "/ws");
+
+    ws.onopen = () => setStatus(true);
+
+    ws.onmessage = (e) => {
+      logBuffer += e.data;
+      let nl;
+      while ((nl = logBuffer.indexOf("\n")) !== -1) {
+        const line = logBuffer.slice(0, nl);
+        logBuffer  = logBuffer.slice(nl + 1);
+        if (line.trim().length > 0) appendLine(line);
+      }
+    };
+
+    ws.onclose = () => {
+      setStatus(false);
+      setTimeout(connectWS, 3000);
+    };
+
+    ws.onerror = () => ws.close();
+  }
+
+  function tagClass(line) {
+    const l = line.toUpperCase();
+    if (l.includes("[TOF]"))       return "tof";
+    if (l.includes("[ULTRA]"))     return "ultra";
+    if (l.includes("[MG995]"))     return "mg995";
+    if (l.includes("[SG90]"))      return "sg90";
+    if (l.includes("[SOIL]"))      return "soil";
+    if (l.includes("[WIFI]"))      return "wifi";
+    if (l.includes("[POST]") ||
+        l.includes("[RETRY]"))     return "post";
+    if (l.includes("[ERROR]"))     return "error";
+    if (l.includes("[POWER]"))     return "power";
+    if (l.includes("[BOOT]") ||
+        l.includes("[NVS]"))       return "boot";
+    if (l.includes("[CYCLE]") ||
+        l.includes("[MICROWAVE]")) return "cycle";
+    if (l.includes("[WSMON]"))     return "wsmon";
+    return "";
+  }
+
+  function appendLine(text) {
+    const term = document.getElementById("terminal");
+
+    if (lineCount >= MAX_LINES) {
+      term.removeChild(term.firstChild);
+      dropCount++;
+      document.getElementById("dropCount").textContent = dropCount;
+    }
+
+    const now = new Date();
+    const ts  = now.toLocaleTimeString("en-GB", { hour12: false });
+
+    const div = document.createElement("div");
+    div.className = "log-line " + tagClass(text);
+
+    const tsEl = document.createElement("span");
+    tsEl.className   = "log-ts";
+    tsEl.textContent = ts;
+
+    const msg = document.createElement("span");
+    msg.className   = "log-msg";
+    msg.textContent = text;
+
+    div.appendChild(tsEl);
+    div.appendChild(msg);
     term.appendChild(div);
+
     lineCount++;
-    if(term.children.length>600)term.removeChild(term.firstChild);
-  });
-  lc.textContent=lineCount+' lines';
-  if(autoScroll)term.scrollTop=term.scrollHeight;
-}
+    document.getElementById("lineCount").textContent = lineCount;
+    document.getElementById("lastSeen").textContent  = "Last message: " + ts;
 
-function connect(){
-  ws=new WebSocket('ws://'+location.host+'/ws');
-  ws.onopen=()=>{
-    dot.className='on';stxt.textContent='Connected';
-    appendLine('[WSMON] Stream connected — waiting for logs...','#555');
-  };
-  ws.onclose=()=>{
-    dot.className='';stxt.textContent='Reconnecting...';
-    appendLine('[WSMON] Lost connection. Retrying in 3s...','#ff3333');
-    setTimeout(connect,3000);
-  };
-  ws.onerror=()=>{ws.close()};
-  ws.onmessage=e=>appendLine(e.data);
-}
+    if (autoScroll) term.scrollTop = term.scrollHeight;
+  }
 
-function clearLog(){term.innerHTML='';lineCount=0;lc.textContent='0 lines'}
-function toggleAS(){autoScroll=!autoScroll;asBtn.textContent='Auto-scroll '+(autoScroll?'ON':'OFF')}
-connect();
+  function clearLogs() {
+    document.getElementById("terminal").innerHTML = "";
+    lineCount = 0; dropCount = 0; logBuffer = "";
+    document.getElementById("lineCount").textContent = 0;
+    document.getElementById("dropCount").textContent = 0;
+    document.getElementById("lastSeen").textContent  = "&#8212;";
+  }
+
+  function toggleScroll() {
+    autoScroll = !autoScroll;
+    document.getElementById("scrollIcon").textContent  = autoScroll ? "&#x23EC;" : "&#x23F8;";
+    document.getElementById("scrollLabel").textContent = autoScroll ? "Auto" : "Paused";
+  }
+
+  function copyLogs() {
+    const lines = [...document.querySelectorAll(".log-line")]
+      .map(l => l.querySelector(".log-ts").textContent + "  " +
+                l.querySelector(".log-msg").textContent)
+      .join("\n");
+    navigator.clipboard.writeText(lines)
+      .then(() => alert("Logs copied to clipboard."))
+      .catch(() => alert("Clipboard unavailable."));
+  }
+
+  function setStatus(connected) {
+    const pill = document.getElementById("statusPill");
+    const text = document.getElementById("statusText");
+    pill.className   = "status-pill " + (connected ? "connected" : "disconnected");
+    text.textContent = connected ? "Connected" : "Disconnected";
+  }
 </script>
 </body>
 </html>
-)rawliteral";
+)rawhtml";
