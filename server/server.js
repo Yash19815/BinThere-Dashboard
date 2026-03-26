@@ -41,7 +41,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import exportRoutes from './exportRoutes.js';
+import exportRoutes from "./exportRoutes.js";
 
 dotenv.config();
 
@@ -795,7 +795,7 @@ app.post("/api/sensor-data", (req, res) => {
 });
 
 // ── Excel Export Routes ──────────────────────────────────────────────────────
-app.use('/api', exportRoutes);
+app.use("/api", exportRoutes);
 
 // ── Start ────────────────────────────────────────────────────────────────────
 const HOST = process.env.HOST || "0.0.0.0";

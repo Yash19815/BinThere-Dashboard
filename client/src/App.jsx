@@ -27,7 +27,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import "./App.css";
 import { useAuth } from "./AuthContext.jsx";
 import LoginPage from "./LoginPage.jsx";
-import ExportToExcel from './components/ExportToExcel';
+import ExportToExcel from "./components/ExportToExcel";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const WS_URL =
@@ -1256,7 +1256,7 @@ export default function App() {
               Real-time fill levels via ultrasonic sensors
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <ExportToExcel />
             <button className="refresh-btn" onClick={fetchBins} title="Refresh">
               ↻ Refresh

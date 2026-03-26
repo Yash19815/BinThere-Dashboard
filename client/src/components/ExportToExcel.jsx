@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
-import { Download, FileSpreadsheet, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import React, { useState } from "react";
+import {
+  Download,
+  FileSpreadsheet,
+  Loader2,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 
 /**
  * ExportToExcel Component
- * 
+ *
  * Add this component to your dashboard wherever you want the export button
  * Example usage:
- * 
+ *
  * import ExportToExcel from './components/ExportToExcel';
- * 
+ *
  * function Dashboard() {
  *   return (
  *     <div>
@@ -19,11 +25,13 @@ import { Download, FileSpreadsheet, Loader2, CheckCircle, XCircle } from 'lucide
  * }
  */
 
-const ExportToExcel = ({ apiBaseUrl = 'http://localhost:3001/api' }) => {
+const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState(null); // 'success', 'error', null
   const toYmd = (d) => d.toISOString().slice(0, 10);
-  const [fromDate, setFromDate] = useState(() => toYmd(new Date(Date.now() - 6 * 86400000)));
+  const [fromDate, setFromDate] = useState(() =>
+    toYmd(new Date(Date.now() - 6 * 86400000)),
+  );
   const [toDate, setToDate] = useState(() => toYmd(new Date()));
   const [formError, setFormError] = useState(null);
 
@@ -34,28 +42,32 @@ const ExportToExcel = ({ apiBaseUrl = 'http://localhost:3001/api' }) => {
 
     try {
       if (fromDate && toDate && fromDate > toDate) {
-        throw new Error('Invalid date range');
+        throw new Error("Invalid date range");
       }
 
       const qs = new URLSearchParams();
-      if (fromDate) qs.set('from', fromDate);
-      if (toDate) qs.set('to', toDate);
+      if (fromDate) qs.set("from", fromDate);
+      if (toDate) qs.set("to", toDate);
 
-      const response = await fetch(`${apiBaseUrl}/export/excel?${qs.toString()}`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        }
-      });
+      const response = await fetch(
+        `${apiBaseUrl}/export/excel?${qs.toString()}`,
+        {
+          method: "GET",
+          headers: {
+            Accept:
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          },
+        },
+      );
 
       if (!response.ok) {
         throw new Error(`Export failed: ${response.statusText}`);
       }
 
       // Get filename from Content-Disposition header or use default
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = `binthere_export_${new Date().toISOString().split('T')[0]}.xlsx`;
-      
+      const contentDisposition = response.headers.get("Content-Disposition");
+      let filename = `binthere_export_${new Date().toISOString().split("T")[0]}.xlsx`;
+
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
         if (filenameMatch) {
@@ -66,25 +78,24 @@ const ExportToExcel = ({ apiBaseUrl = 'http://localhost:3001/api' }) => {
       // Convert response to blob and trigger download
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = filename;
       document.body.appendChild(link);
       link.click();
-      
+
       // Cleanup
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      setExportStatus('success');
+      setExportStatus("success");
       setTimeout(() => setExportStatus(null), 3000);
-
     } catch (error) {
-      console.error('Export error:', error);
-      if (error?.message === 'Invalid date range') {
-        setFormError('From date must be earlier than or equal to To date.');
+      console.error("Export error:", error);
+      if (error?.message === "Invalid date range") {
+        setFormError("From date must be earlier than or equal to To date.");
       }
-      setExportStatus('error');
+      setExportStatus("error");
       setTimeout(() => setExportStatus(null), 5000);
     } finally {
       setIsExporting(false);
@@ -119,7 +130,7 @@ const ExportToExcel = ({ apiBaseUrl = 'http://localhost:3001/api' }) => {
       <button
         onClick={handleExport}
         disabled={isExporting}
-        className={`export-button ${isExporting ? 'exporting' : ''} ${exportStatus || ''}`}
+        className={`export-button ${isExporting ? "exporting" : ""} ${exportStatus || ""}`}
         title="Export selected date range to Excel"
       >
         {isExporting ? (
@@ -127,12 +138,12 @@ const ExportToExcel = ({ apiBaseUrl = 'http://localhost:3001/api' }) => {
             <Loader2 className="icon spin" size={18} />
             <span>Exporting...</span>
           </>
-        ) : exportStatus === 'success' ? (
+        ) : exportStatus === "success" ? (
           <>
             <CheckCircle className="icon" size={18} />
             <span>Exported!</span>
           </>
-        ) : exportStatus === 'error' ? (
+        ) : exportStatus === "error" ? (
           <>
             <XCircle className="icon" size={18} />
             <span>Export Failed</span>
@@ -145,9 +156,9 @@ const ExportToExcel = ({ apiBaseUrl = 'http://localhost:3001/api' }) => {
         )}
       </button>
 
-      {exportStatus === 'error' && (
+      {exportStatus === "error" && (
         <div className="error-message">
-          {formError ? formError : 'Failed to export data. Please try again.'}
+          {formError ? formError : "Failed to export data. Please try again."}
         </div>
       )}
 
@@ -191,7 +202,7 @@ const ExportToExcel = ({ apiBaseUrl = 'http://localhost:3001/api' }) => {
           align-items: center;
           gap: 8px;
           padding: 10px 20px;
-          background: #4472C4;
+          background: #4472c4;
           color: white;
           border: none;
           border-radius: 6px;
@@ -203,7 +214,7 @@ const ExportToExcel = ({ apiBaseUrl = 'http://localhost:3001/api' }) => {
         }
 
         .export-button:hover:not(:disabled) {
-          background: #365DA3;
+          background: #365da3;
           transform: translateY(-1px);
           box-shadow: 0 4px 8px rgba(68, 114, 196, 0.3);
         }

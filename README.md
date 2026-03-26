@@ -19,9 +19,10 @@ A real-time web dashboard for monitoring dustbin fill levels via ESP32 ultrasoni
 - **Auto-reconnect** — WebSocket reconnects automatically on network loss
 - **No hardware required to test** — included PowerShell simulation script
 
-    ---
+  ***
 
 ## 📁 Project Structure
+
 ```
 demo-ultrasonic/
 ├── package.json              ← Root: run both servers with one command
@@ -152,21 +153,21 @@ VITE_API_URL=http://localhost:3001
 
 ## SG90 Servo Motor
 
-| Pin          | Wire Color | Connected To        | Notes                             |
-| ------------ | ---------- | ------------------- | --------------------------------- |
-| Power (VCC)  | Red        | External 5V supply  | Stable 5V shared power supply     |
-| Signal (PWM) | Orange     | GPIO 13             | PWM control signal from ESP32     |
-| GND          | Brown      | Common ground rail  | Shared with ESP32 GND             |
+| Pin          | Wire Color | Connected To       | Notes                         |
+| ------------ | ---------- | ------------------ | ----------------------------- |
+| Power (VCC)  | Red        | External 5V supply | Stable 5V shared power supply |
+| Signal (PWM) | Orange     | GPIO 13            | PWM control signal from ESP32 |
+| GND          | Brown      | Common ground rail | Shared with ESP32 GND         |
 
 ---
 
 ## MG995 Servo Motor
 
-| Pin          | Wire Color | Connected To        | Notes                                         |
-| ------------ | ---------- | ------------------- | --------------------------------------------- |
-| Power (VCC)  | Red        | External 5V supply  | Stable 5V shared power supply                 |
-| Signal (PWM) | Orange     | GPIO 32             | 50Hz PWM, pulse width 1000–2000µs             |
-| GND          | Brown      | Common ground rail  | Shared with ESP32 GND                         |
+| Pin          | Wire Color | Connected To       | Notes                             |
+| ------------ | ---------- | ------------------ | --------------------------------- |
+| Power (VCC)  | Red        | External 5V supply | Stable 5V shared power supply     |
+| Signal (PWM) | Orange     | GPIO 32            | 50Hz PWM, pulse width 1000–2000µs |
+| GND          | Brown      | Common ground rail | Shared with ESP32 GND             |
 
 > ⚠️ MG995 draws up to 1200mA under load — ensure your 5V supply is rated for enough current to handle both servos simultaneously.
 
@@ -174,12 +175,12 @@ VITE_API_URL=http://localhost:3001
 
 ## Ultrasonic Sensor 1
 
-| Pin  | Connected To | Notes                        |
-| ---- | ------------ | ---------------------------- |
-| VCC  | 3.3V         | Powered from ESP32 3.3V      |
-| TRIG | GPIO 5       | Trigger pin                  |
-| ECHO | GPIO 18      | Echo input                   |
-| GND  | Common ground rail | Shared with ESP32 GND  |
+| Pin  | Connected To       | Notes                   |
+| ---- | ------------------ | ----------------------- |
+| VCC  | 3.3V               | Powered from ESP32 3.3V |
+| TRIG | GPIO 5             | Trigger pin             |
+| ECHO | GPIO 18            | Echo input              |
+| GND  | Common ground rail | Shared with ESP32 GND   |
 
 ---
 
@@ -206,12 +207,12 @@ VITE_API_URL=http://localhost:3001
 
 ## VL53L0X TOF Laser Distance Sensor
 
-| Pin | Connected To       | Notes                                        |
-| --- | ------------------ | -------------------------------------------- |
-| VIN | RCWL-0516 3V3 pin  | Draws ~20mA, within RCWL-0516's 100mA limit  |
-| GND | Common ground rail | Shared with ESP32 GND                        |
-| SDA | GPIO 25            | Custom I2C data (GPIO 21 already in use)     |
-| SCL | GPIO 22            | Custom I2C clock                             |
+| Pin | Connected To       | Notes                                       |
+| --- | ------------------ | ------------------------------------------- |
+| VIN | RCWL-0516 3V3 pin  | Draws ~20mA, within RCWL-0516's 100mA limit |
+| GND | Common ground rail | Shared with ESP32 GND                       |
+| SDA | GPIO 25            | Custom I2C data (GPIO 21 already in use)    |
+| SCL | GPIO 22            | Custom I2C clock                            |
 
 > ⚠️ Initialize I2C manually in code: `Wire.begin(25, 22);` before calling the VL53L0X library.
 
