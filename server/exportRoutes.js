@@ -7,11 +7,9 @@ import { dirname, join } from "path";
 
 const router = express.Router();
 
-// ES modules equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Database path - matches your structure (bins.db in server root)
 const DB_PATH = join(__dirname, "bins.db");
 
 // Fixed IST offset (UTC+05:30) - no daylight savings, so it's safe to hardcode.
@@ -37,7 +35,6 @@ function validateYmd(ymd) {
   return typeof ymd === "string" && /^\d{4}-\d{2}-\d{2}$/.test(ymd);
 }
 
-// Converts a YYYY-MM-DD *in IST* to an ISO timestamp (UTC) for SQL filtering.
 function istYmdToUtcIso(ymd, hour, minute, second, millisecond) {
   const [y, m, d] = ymd.split("-").map((v) => parseInt(v, 10));
   const utcMs = Date.UTC(y, m - 1, d, hour, minute, second, millisecond);
@@ -90,7 +87,7 @@ router.get("/export/excel", async (req, res) => {
     }
 
     const fromUtcIso = from ? istYmdToUtcIso(from, 0, 0, 0, 0) : null;
-    const toUtcIso = to ? istYmdToUtcIso(to, 23, 59, 59, 999) : null;
+    const toUtcIso   = to   ? istYmdToUtcIso(to, 23, 59, 59, 999) : null;
 
     const measurementConditions = [];
     const measurementParams = [];
@@ -120,7 +117,6 @@ router.get("/export/excel", async (req, res) => {
       ? `WHERE ${fillCycleConditions.join(" AND ")}`
       : "";
 
-    // Fetch data from all three tables
     const [bins, measurements, fillCycles] = await Promise.all([
       queryDatabase(db, "SELECT * FROM bins ORDER BY id"),
       queryDatabase(
@@ -135,24 +131,15 @@ router.get("/export/excel", async (req, res) => {
       ),
     ]);
 
-    // Create Excel workbook
     const workbook = new ExcelJS.Workbook();
     workbook.creator = "BinThere Dashboard";
     workbook.created = new Date();
 
-    // Add Bins sheet
     createBinsSheet(workbook, bins);
-
-    // Add Measurements sheet
     createMeasurementsSheet(workbook, measurements);
-
-    // Add Fill Cycles sheet
     createFillCyclesSheet(workbook, fillCycles);
-
-    // Add Summary/Overview sheet
     createSummarySheet(workbook, bins, measurements, fillCycles);
 
-    // Set response headers
     const filename = `binthere_export_${new Date().toISOString().split("T")[0]}.xlsx`;
     res.setHeader(
       "Content-Type",
@@ -160,7 +147,6 @@ router.get("/export/excel", async (req, res) => {
     );
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
 
-    // Write to response
     await workbook.xlsx.write(res);
     res.end();
   } catch (error) {
@@ -173,7 +159,8 @@ router.get("/export/excel", async (req, res) => {
   }
 });
 
-// Helper function to promisify database queries
+// ─── Helper: promisify sqlite3 queries ───────────────────────────────────────
+
 function queryDatabase(db, query, params = []) {
   return new Promise((resolve, reject) => {
     db.all(query, params, (err, rows) => {
@@ -183,157 +170,285 @@ function queryDatabase(db, query, params = []) {
   });
 }
 
-// Create Bins sheet with formatting
+// ─── Shared style helpers ────────────────────────────────────────────────────
+
+function solidFill(argb) {
+  return { type: "pattern", pattern: "solid", fgColor: { argb } };
+}
+
+function thinBorder(argb) {
+  const s = { style: "thin", color: { argb } };
+  return { top: s, left: s, bottom: s, right: s };
+}
+
+// ─── Bins sheet (unchanged) ───────────────────────────────────────────────────
+
 function createBinsSheet(workbook, bins) {
   const sheet = workbook.addWorksheet("Bins");
 
-  // Define columns
   sheet.columns = [
-    { header: "ID", key: "id", width: 10 },
-    { header: "Name", key: "name", width: 20 },
-    { header: "Location", key: "location", width: 25 },
+    { header: "ID",              key: "id",            width: 10 },
+    { header: "Name",            key: "name",          width: 20 },
+    { header: "Location",        key: "location",      width: 25 },
     { header: "Max Height (cm)", key: "max_height_cm", width: 18 },
   ];
 
-  // Style header row
   styleHeaderRow(sheet);
-
-  // Add data
-  bins.forEach((bin) => {
-    sheet.addRow(bin);
-  });
-
-  // Apply number formatting
+  bins.forEach((bin) => sheet.addRow(bin));
   sheet.getColumn("max_height_cm").numFmt = "0.00";
 }
 
-// Create Measurements sheet with formatting
+// ─── Measurements sheet: side-by-side Dry (A–G) | sep (H) | Wet (I–O) ───────
+
 function createMeasurementsSheet(workbook, measurements) {
-  const sheet = workbook.addWorksheet("Measurements");
-
-  sheet.columns = [
-    { header: "ID", key: "id", width: 10 },
-    { header: "Bin ID", key: "bin_id", width: 10 },
-    { header: "Compartment", key: "compartment", width: 15 },
-    { header: "Raw Distance (cm)", key: "raw_distance_cm", width: 18 },
-    { header: "Fill Level (%)", key: "fill_level_percent", width: 15 },
-    { header: "Date (IST)", key: "ist_date", width: 14 },
-    { header: "Time (IST)", key: "ist_time", width: 14 },
-  ];
-
-  styleHeaderRow(sheet);
-
-  measurements.forEach((measurement) => {
-    const rowData = {
-      ...measurement,
-      ist_date: formatIstDate(measurement.timestamp),
-      ist_time: formatIstTime(measurement.timestamp),
-    };
-
-    const row = sheet.addRow(rowData);
-
-    // Color code compartments
-    const compartmentCell = row.getCell("compartment");
-    if (measurement.compartment === "dry") {
-      compartmentCell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFE6F3FF" }, // Light blue
-      };
-    } else if (measurement.compartment === "wet") {
-      compartmentCell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFE6F9E6" }, // Light green
-      };
-    }
-
-    // Highlight high fill levels
-    const fillCell = row.getCell("fill_level_percent");
-    if (measurement.fill_level_percent >= 80) {
-      fillCell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFFFE6E6" }, // Light red
-      };
-      fillCell.font = { bold: true, color: { argb: "FFCC0000" } };
-    }
+  const sheet = workbook.addWorksheet("Measurements", {
+    views: [{ state: "frozen", ySplit: 2 }],
   });
 
-  // Apply number formatting
-  sheet.getColumn("raw_distance_cm").numFmt = "0.00";
-  sheet.getColumn("fill_level_percent").numFmt = '0.0"%"';
-}
+  // Column widths: A–G dry | H sep | I–O wet
+  const COL_WIDTHS = [10, 10, 15, 18, 15, 14, 14, 4, 10, 10, 15, 18, 15, 14, 14];
+  COL_WIDTHS.forEach((w, i) => { sheet.getColumn(i + 1).width = w; });
 
-// Create Fill Cycles sheet with formatting
-function createFillCyclesSheet(workbook, fillCycles) {
-  const sheet = workbook.addWorksheet("Fill Cycles");
+  const DRY_TITLE_COLOR  = "FF1F4E79";
+  const WET_TITLE_COLOR  = "FF375623";
+  const DRY_HEADER_COLOR = "FF2E75B6";
+  const WET_HEADER_COLOR = "FF548235";
+  const DRY_EVEN_COLOR   = "FFDEEAF1";
+  const WET_EVEN_COLOR   = "FFE2EFDA";
 
-  sheet.columns = [
-    { header: "ID", key: "id", width: 10 },
-    { header: "Bin ID", key: "bin_id", width: 10 },
-    { header: "Compartment", key: "compartment", width: 15 },
-    { header: "Filled At (IST)", key: "filled_at", width: 22 },
-    { header: "Emptied At (IST)", key: "emptied_at", width: 22 },
-    { header: "Duration (hours)", key: "duration", width: 18 },
-  ];
+  // Row 1: title bars
+  sheet.getRow(1).height = 22;
+  sheet.mergeCells("A1:G1");
+  const dryTitle     = sheet.getCell("A1");
+  dryTitle.value     = "DRY WASTE";
+  dryTitle.font      = { bold: true, size: 13, color: { argb: "FFFFFFFF" } };
+  dryTitle.fill      = solidFill(DRY_TITLE_COLOR);
+  dryTitle.alignment = { horizontal: "center", vertical: "middle" };
 
-  styleHeaderRow(sheet);
+  sheet.mergeCells("I1:O1");
+  const wetTitle     = sheet.getCell("I1");
+  wetTitle.value     = "WET WASTE";
+  wetTitle.font      = { bold: true, size: 13, color: { argb: "FFFFFFFF" } };
+  wetTitle.fill      = solidFill(WET_TITLE_COLOR);
+  wetTitle.alignment = { horizontal: "center", vertical: "middle" };
 
-  fillCycles.forEach((cycle) => {
-    const filledAtRaw = cycle.filled_at;
-    const emptiedAtRaw = cycle.emptied_at;
-    const rowData = { ...cycle };
+  // Row 2: column headers
+  sheet.getRow(2).height = 18;
+  const HEADERS = ["ID", "Bin ID", "Compartment", "Raw Distance (cm)", "Fill Level (%)", "Date (IST)", "Time (IST)"];
+  HEADERS.forEach((h, i) => {
+    const dc       = sheet.getCell(2, i + 1);
+    dc.value       = h;
+    dc.font        = { bold: true, color: { argb: "FFFFFFFF" } };
+    dc.fill        = solidFill(DRY_HEADER_COLOR);
+    dc.alignment   = { horizontal: "center", vertical: "middle" };
+    dc.border      = thinBorder("FF1F4E79");
 
-    // Display fill/empty timestamps in IST (24-hour), while keeping raw ISO
-    // timestamps available via local variables for duration calculation.
-    rowData.filled_at = formatIstDateTime(filledAtRaw);
-    rowData.emptied_at = emptiedAtRaw ? formatIstDateTime(emptiedAtRaw) : "";
+    const wc       = sheet.getCell(2, i + 9);
+    wc.value       = h;
+    wc.font        = { bold: true, color: { argb: "FFFFFFFF" } };
+    wc.fill        = solidFill(WET_HEADER_COLOR);
+    wc.alignment   = { horizontal: "center", vertical: "middle" };
+    wc.border      = thinBorder("FF375623");
+  });
 
-    // Calculate duration if both timestamps exist
-    if (filledAtRaw && emptiedAtRaw) {
-      const filled = new Date(filledAtRaw);
-      const emptied = new Date(emptiedAtRaw);
-      const durationHours = (emptied - filled) / (1000 * 60 * 60);
-      rowData.duration = durationHours.toFixed(2);
-    } else {
-      rowData.duration = "Still Full";
+  // Split and write data rows
+  const dryRows = measurements.filter((m) => m.compartment === "dry");
+  const wetRows = measurements.filter((m) => m.compartment === "wet");
+  const maxRows = Math.max(dryRows.length, wetRows.length);
+
+  for (let r = 0; r < maxRows; r++) {
+    const excelRow = r + 3;
+    const isEven   = r % 2 === 1;
+    sheet.getRow(excelRow).height = 15;
+
+    if (dryRows[r]) {
+      const m      = dryRows[r];
+      const bg     = solidFill(isEven ? DRY_EVEN_COLOR : "FFFFFFFF");
+      const bdr    = thinBorder("FFBDD7EE");
+      const values = [m.id, m.bin_id, m.compartment, m.raw_distance_cm, m.fill_level_percent, formatIstDate(m.timestamp), formatIstTime(m.timestamp)];
+      values.forEach((val, i) => {
+        const cell     = sheet.getCell(excelRow, i + 1);
+        cell.value     = val;
+        cell.fill      = bg;
+        cell.border    = bdr;
+        cell.alignment = { vertical: "middle", horizontal: i === 3 || i === 4 ? "right" : "center" };
+        if (i === 3) cell.numFmt = "0.00";
+        if (i === 4) cell.numFmt = '0.0"%"';
+      });
+      if (m.fill_level_percent >= 80) {
+        const fc   = sheet.getCell(excelRow, 5);
+        fc.fill    = solidFill("FFFFE6E6");
+        fc.font    = { bold: true, color: { argb: "FFCC0000" } };
+        fc.numFmt  = '0.0"%"';
+      }
     }
 
-    const row = sheet.addRow(rowData);
+    if (wetRows[r]) {
+      const m      = wetRows[r];
+      const bg     = solidFill(isEven ? WET_EVEN_COLOR : "FFFFFFFF");
+      const bdr    = thinBorder("FFA9D18E");
+      const values = [m.id, m.bin_id, m.compartment, m.raw_distance_cm, m.fill_level_percent, formatIstDate(m.timestamp), formatIstTime(m.timestamp)];
+      values.forEach((val, i) => {
+        const cell     = sheet.getCell(excelRow, i + 9);
+        cell.value     = val;
+        cell.fill      = bg;
+        cell.border    = bdr;
+        cell.alignment = { vertical: "middle", horizontal: i === 3 || i === 4 ? "right" : "center" };
+        if (i === 3) cell.numFmt = "0.00";
+        if (i === 4) cell.numFmt = '0.0"%"';
+      });
+      if (m.fill_level_percent >= 80) {
+        const fc   = sheet.getCell(excelRow, 13);
+        fc.fill    = solidFill("FFFFE6E6");
+        fc.font    = { bold: true, color: { argb: "FFCC0000" } };
+        fc.numFmt  = '0.0"%"';
+      }
+    }
+  }
+}
 
-    // Highlight active (not emptied) cycles
-    if (!cycle.emptied_at) {
-      row.eachCell((cell) => {
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FFFFF4E6" }, // Light orange
-        };
+// ─── Fill Cycles sheet: side-by-side Dry (A–E) | sep (F) | Wet (G–K) ─────────
+//
+// Compartment column removed — the title rows "DRY FILL CYCLES" / "WET FILL CYCLES"
+// make the compartment self-evident.
+//
+// Dry  → cols 1–5  (A–E): ID | Bin ID | Filled At (IST) | Emptied At (IST) | Duration (hours)
+// Sep  → col  6   (F):   empty
+// Wet  → cols 7–11 (G–K): same 5 columns
+
+function createFillCyclesSheet(workbook, fillCycles) {
+  const sheet = workbook.addWorksheet("Fill Cycles", {
+    views: [{ state: "frozen", ySplit: 2 }],
+  });
+
+  // Column widths: A–E dry | F sep | G–K wet
+  const COL_WIDTHS = [10, 10, 22, 22, 18, 4, 10, 10, 22, 22, 18];
+  COL_WIDTHS.forEach((w, i) => { sheet.getColumn(i + 1).width = w; });
+
+  const DRY_TITLE_COLOR  = "FF1F4E79";
+  const WET_TITLE_COLOR  = "FF375623";
+  const DRY_HEADER_COLOR = "FF2E75B6";
+  const WET_HEADER_COLOR = "FF548235";
+  const DRY_EVEN_COLOR   = "FFDEEAF1";
+  const WET_EVEN_COLOR   = "FFE2EFDA";
+  const ACTIVE_COLOR     = "FFFFF4E6"; // orange tint for still-full cycles
+
+  // Row 1: title bars
+  sheet.getRow(1).height = 22;
+
+  sheet.mergeCells("A1:E1");
+  const dryTitle     = sheet.getCell("A1");
+  dryTitle.value     = "DRY FILL CYCLES";
+  dryTitle.font      = { bold: true, size: 13, color: { argb: "FFFFFFFF" } };
+  dryTitle.fill      = solidFill(DRY_TITLE_COLOR);
+  dryTitle.alignment = { horizontal: "center", vertical: "middle" };
+
+  sheet.mergeCells("G1:K1");
+  const wetTitle     = sheet.getCell("G1");
+  wetTitle.value     = "WET FILL CYCLES";
+  wetTitle.font      = { bold: true, size: 13, color: { argb: "FFFFFFFF" } };
+  wetTitle.fill      = solidFill(WET_TITLE_COLOR);
+  wetTitle.alignment = { horizontal: "center", vertical: "middle" };
+
+  // Row 2: column headers
+  sheet.getRow(2).height = 18;
+  const HEADERS = ["ID", "Bin ID", "Filled At (IST)", "Emptied At (IST)", "Duration (hours)"];
+  HEADERS.forEach((h, i) => {
+    const dc       = sheet.getCell(2, i + 1);   // dry: cols 1–5
+    dc.value       = h;
+    dc.font        = { bold: true, color: { argb: "FFFFFFFF" } };
+    dc.fill        = solidFill(DRY_HEADER_COLOR);
+    dc.alignment   = { horizontal: "center", vertical: "middle" };
+    dc.border      = thinBorder("FF1F4E79");
+
+    const wc       = sheet.getCell(2, i + 7);   // wet: cols 7–11
+    wc.value       = h;
+    wc.font        = { bold: true, color: { argb: "FFFFFFFF" } };
+    wc.fill        = solidFill(WET_HEADER_COLOR);
+    wc.alignment   = { horizontal: "center", vertical: "middle" };
+    wc.border      = thinBorder("FF375623");
+  });
+
+  // Split by compartment
+  const dryRows = fillCycles.filter((c) => c.compartment === "dry");
+  const wetRows = fillCycles.filter((c) => c.compartment === "wet");
+  const maxRows = Math.max(dryRows.length, wetRows.length);
+
+  for (let r = 0; r < maxRows; r++) {
+    const excelRow = r + 3;
+    const isEven   = r % 2 === 1;
+    sheet.getRow(excelRow).height = 15;
+
+    // ── Dry side (cols 1–5) ──────────────────────────────────────────────
+    if (dryRows[r]) {
+      const c          = dryRows[r];
+      const isActive   = !c.emptied_at;
+      const rowBgArgb  = isActive ? ACTIVE_COLOR : (isEven ? DRY_EVEN_COLOR : "FFFFFFFF");
+      const bg         = solidFill(rowBgArgb);
+      const bdr        = thinBorder("FFBDD7EE");
+
+      let duration;
+      if (c.filled_at && c.emptied_at) {
+        duration = ((new Date(c.emptied_at) - new Date(c.filled_at)) / (1000 * 60 * 60)).toFixed(2);
+      } else {
+        duration = "Still Full";
+      }
+
+      const values = [
+        c.id,
+        c.bin_id,
+        formatIstDateTime(c.filled_at),
+        c.emptied_at ? formatIstDateTime(c.emptied_at) : "",
+        duration,
+      ];
+
+      values.forEach((val, i) => {
+        const cell     = sheet.getCell(excelRow, i + 1);
+        cell.value     = val;
+        cell.fill      = bg;
+        cell.border    = bdr;
+        cell.alignment = { vertical: "middle", horizontal: i === 0 || i === 1 ? "center" : (i === 4 ? "right" : "left") };
+        if (i === 4 && typeof val === "string" && val !== "Still Full") cell.numFmt = "0.00";
       });
     }
 
-    // Color code compartments
-    const compartmentCell = row.getCell("compartment");
-    if (cycle.compartment === "dry") {
-      compartmentCell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFE6F3FF" },
-      };
-    } else if (cycle.compartment === "wet") {
-      compartmentCell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFE6F9E6" },
-      };
-    }
-  });
+    // ── Wet side (cols 7–11) ─────────────────────────────────────────────
+    if (wetRows[r]) {
+      const c          = wetRows[r];
+      const isActive   = !c.emptied_at;
+      const rowBgArgb  = isActive ? ACTIVE_COLOR : (isEven ? WET_EVEN_COLOR : "FFFFFFFF");
+      const bg         = solidFill(rowBgArgb);
+      const bdr        = thinBorder("FFA9D18E");
 
-  sheet.getColumn("duration").numFmt = "0.00";
+      let duration;
+      if (c.filled_at && c.emptied_at) {
+        duration = ((new Date(c.emptied_at) - new Date(c.filled_at)) / (1000 * 60 * 60)).toFixed(2);
+      } else {
+        duration = "Still Full";
+      }
+
+      const values = [
+        c.id,
+        c.bin_id,
+        formatIstDateTime(c.filled_at),
+        c.emptied_at ? formatIstDateTime(c.emptied_at) : "",
+        duration,
+      ];
+
+      values.forEach((val, i) => {
+        const cell     = sheet.getCell(excelRow, i + 7);  // +6 offset → col G onward
+        cell.value     = val;
+        cell.fill      = bg;
+        cell.border    = bdr;
+        cell.alignment = { vertical: "middle", horizontal: i === 0 || i === 1 ? "center" : (i === 4 ? "right" : "left") };
+        if (i === 4 && typeof val === "string" && val !== "Still Full") cell.numFmt = "0.00";
+      });
+    }
+  }
 }
 
-// Create Summary sheet with statistics
+// ─── Summary sheet (unchanged) ───────────────────────────────────────────────
+
 function createSummarySheet(workbook, bins, measurements, fillCycles) {
   const sheet = workbook.addWorksheet("Summary", {
     properties: { tabColor: { argb: "FF4472C4" } },
@@ -342,7 +457,6 @@ function createSummarySheet(workbook, bins, measurements, fillCycles) {
   sheet.getColumn("A").width = 30;
   sheet.getColumn("B").width = 20;
 
-  // Title
   const titleRow = sheet.addRow(["BinThere Export Summary"]);
   titleRow.font = { size: 16, bold: true };
   titleRow.getCell(1).fill = {
@@ -353,42 +467,26 @@ function createSummarySheet(workbook, bins, measurements, fillCycles) {
   titleRow.getCell(1).font.color = { argb: "FFFFFFFF" };
   sheet.addRow([]);
 
-  // Export date
   sheet.addRow(["Export Date:", new Date().toLocaleString()]);
   sheet.addRow([]);
 
-  // Statistics
   sheet.addRow(["Statistics"]).font = { bold: true, size: 14 };
-  sheet.addRow(["Total Bins:", bins.length]);
+  sheet.addRow(["Total Bins:",         bins.length]);
   sheet.addRow(["Total Measurements:", measurements.length]);
-  sheet.addRow(["Total Fill Cycles:", fillCycles.length]);
+  sheet.addRow(["Total Fill Cycles:",  fillCycles.length]);
   sheet.addRow([]);
 
-  // Active cycles
   const activeCycles = fillCycles.filter((c) => !c.emptied_at).length;
-  sheet.addRow(["Active Fill Cycles:", activeCycles]);
+  sheet.addRow(["Active Fill Cycles:",    activeCycles]);
   sheet.addRow(["Completed Fill Cycles:", fillCycles.length - activeCycles]);
   sheet.addRow([]);
 
-  // Latest measurements by compartment
   if (measurements.length > 0) {
     sheet.addRow(["Latest Fill Levels"]).font = { bold: true, size: 14 };
-
     const latestDry = measurements.find((m) => m.compartment === "dry");
     const latestWet = measurements.find((m) => m.compartment === "wet");
-
-    if (latestDry) {
-      sheet.addRow([
-        "Dry Compartment:",
-        `${latestDry.fill_level_percent.toFixed(1)}%`,
-      ]);
-    }
-    if (latestWet) {
-      sheet.addRow([
-        "Wet Compartment:",
-        `${latestWet.fill_level_percent.toFixed(1)}%`,
-      ]);
-    }
+    if (latestDry) sheet.addRow(["Dry Compartment:", `${latestDry.fill_level_percent.toFixed(1)}%`]);
+    if (latestWet) sheet.addRow(["Wet Compartment:", `${latestWet.fill_level_percent.toFixed(1)}%`]);
   }
 
   sheet.addRow([]);
@@ -398,17 +496,14 @@ function createSummarySheet(workbook, bins, measurements, fillCycles) {
   sheet.addRow(["• Fill Cycles - Fill/empty events"]);
 }
 
-// Helper to style header rows consistently
+// ─── Helper: style header row (row 1) with blue background ───────────────────
+
 function styleHeaderRow(sheet) {
-  const headerRow = sheet.getRow(1);
-  headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
-  headerRow.fill = {
-    type: "pattern",
-    pattern: "solid",
-    fgColor: { argb: "FF4472C4" },
-  };
+  const headerRow     = sheet.getRow(1);
+  headerRow.font      = { bold: true, color: { argb: "FFFFFFFF" } };
+  headerRow.fill      = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4472C4" } };
   headerRow.alignment = { vertical: "middle", horizontal: "center" };
-  headerRow.height = 20;
+  headerRow.height    = 20;
 }
 
 export default router;

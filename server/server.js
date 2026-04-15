@@ -805,3 +805,124 @@ server.listen(PORT, HOST, () => {
   console.log(`✅ Database: ${DB_PATH}`);
   console.log(`📊 Export endpoint: http://${HOST}:${PORT}/api/export/excel`);
 });
+// ── IST time helper ──────────────────────────────────────────────────────────
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // UTC+05:30
+
+/** Returns a human-readable IST timestamp string for console logs. */
+function toISTString(date = new Date()) {
+  return date.toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year:     "numeric",
+    month:    "2-digit",
+    day:      "2-digit",
+    hour:     "2-digit",
+    minute:   "2-digit",
+    second:   "2-digit",
+    hour12:   false,
+  }) + " IST";
+}
+// ── Daily Data Purge ─────────────────────────────────────────────────────────
+
+/**
+ * Deletes rows older than 1 year from measurements and fill_cycles,
+ * then runs VACUUM to actually shrink the .db file on disk.
+ *
+ * SQLite stores timestamps as ISO-8601 text, so datetime() comparisons
+ * work correctly with the '-1 year' modifier.
+ */
+function purgeOldData() {
+  const now = new Date();
+  const label = now.toISOString();
+  const cutoff = new Date(now);
+  cutoff.setFullYear(cutoff.getFullYear() - 1);
+  const cutoffLabel = cutoff.toISOString();
+
+  console.log("─".repeat(60));
+  console.log(`🧹 [${label}] Daily data purge starting...`);
+  console.log(`   Cutoff date : ${cutoffLabel} (older than 1 year)`);
+  console.log("─".repeat(60));
+
+  // ── Pre-purge counts ──────────────────────────────────────────
+  const mTotal   = db.prepare("SELECT COUNT(*) AS c FROM measurements").get().c;
+  const mOld     = db.prepare("SELECT COUNT(*) AS c FROM measurements WHERE timestamp < datetime('now', '-1 year')").get().c;
+  const fcTotal  = db.prepare("SELECT COUNT(*) AS c FROM fill_cycles").get().c;
+  const fcOld    = db.prepare("SELECT COUNT(*) AS c FROM fill_cycles WHERE filled_at < datetime('now', '-1 year')").get().c;
+
+  console.log("📊 Pre-purge counts:");
+  console.log(`   measurements : ${mTotal} total  |  ${mOld} to delete`);
+  console.log(`   fill_cycles  : ${fcTotal} total  |  ${fcOld} to delete`);
+
+  if (mOld === 0 && fcOld === 0) {
+    console.log("✅ Nothing to purge — all records are within the 1-year window.");
+    console.log("─".repeat(60));
+    scheduleDailyPurge();
+    return;
+  }
+
+  // ── Run purge inside a transaction ───────────────────────────
+  const purge = db.transaction(() => {
+    const m  = db.prepare("DELETE FROM measurements WHERE timestamp < datetime('now', '-1 year')").run();
+    const fc = db.prepare("DELETE FROM fill_cycles WHERE filled_at  < datetime('now', '-1 year')").run();
+    return { measurements: m.changes, fill_cycles: fc.changes };
+  });
+
+  try {
+    const t0      = Date.now();
+    const deleted = purge();
+    const elapsed = Date.now() - t0;
+
+    console.log(`🗑️  Deleted:`);
+    console.log(`   measurements : ${deleted.measurements} row(s)`);
+    console.log(`   fill_cycles  : ${deleted.fill_cycles} row(s)`);
+    console.log(`   Completed in : ${elapsed} ms`);
+
+    // ── Post-purge counts ──────────────────────────────────────
+    const mAfter  = db.prepare("SELECT COUNT(*) AS c FROM measurements").get().c;
+    const fcAfter = db.prepare("SELECT COUNT(*) AS c FROM fill_cycles").get().c;
+    console.log("📊 Post-purge counts:");
+    console.log(`   measurements : ${mAfter} remaining`);
+    console.log(`   fill_cycles  : ${fcAfter} remaining`);
+
+    // ── VACUUM ─────────────────────────────────────────────────
+    console.log("🔧 Running VACUUM to compact database file...");
+    const tv = Date.now();
+    db.exec("VACUUM");
+    console.log(`✅ VACUUM complete (${Date.now() - tv} ms)`);
+
+  } catch (err) {
+    console.error("❌ Purge transaction failed:", err);
+  }
+
+  console.log("─".repeat(60));
+}
+
+/**
+ * Schedules purgeOldData() to run at the next local midnight, then
+ * re-schedules itself every 24 hours afterward.
+ *
+ * Using recursive setTimeout (not setInterval) ensures the next run is
+ * always calculated from the actual current time, so clock drift or a
+ * delayed execution never causes double-fires.
+ */
+function scheduleDailyPurge() {
+  const now = new Date();
+  const nextMidnight = new Date(now);
+  nextMidnight.setDate(nextMidnight.getDate() + 1);
+  nextMidnight.setHours(0, 0, 0, 0);
+  const msUntilMidnight = nextMidnight - now;
+
+  console.log(
+    `⏰ Next data purge scheduled at midnight ` +
+    `(in ${Math.round(msUntilMidnight / 1000 / 60)} minutes).`
+  );
+
+  setTimeout(() => {
+    purgeOldData();
+    scheduleDailyPurge(); // reschedule for the following midnight
+  }, msUntilMidnight);
+}
+
+// Run once immediately on startup to clean any backlog,
+// then arm the recurring midnight schedule.
+purgeOldData();
+scheduleDailyPurge();
