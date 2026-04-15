@@ -13,12 +13,15 @@
 
   --c-empty: #94a3b8;
   --c-low: #22c55e;
-  --c-medium: #f59e0b;
-  --c-high: #f97316;
-  --c-full: #ef4444;
+  --c-medium: #fbbf24;
+  --c-high: #fb923c;
+  --c-full: #f87171;
 
   --radius: 16px;
   --radius-sm: 8px;
+
+  --chart-dry: hsl(210, 80%, 40%);
+  --chart-wet: hsl(140, 65%, 40%);
 }
 
 html.dark {
@@ -32,6 +35,9 @@ html.dark {
   --header-bg: #12141f;
   --shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.6);
+
+  --chart-dry: hsl(210, 95%, 64%);
+  --chart-wet: hsl(145, 72%, 58%);
 }
 
 /* ── Reset ─────────────────────────────────────────────────────────────────── */
@@ -465,19 +471,19 @@ button {
   transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .fill-liquid.empty {
-  background: linear-gradient(180deg, #cbd5e1, #94a3b8);
+  background: linear-gradient(180deg, #94a3b8, #64748b);
 }
 .fill-liquid.low {
-  background: linear-gradient(180deg, #4ade80, #16a34a);
+  background: linear-gradient(180deg, #22c55e, #16a34a);
 }
 .fill-liquid.medium {
-  background: linear-gradient(180deg, #fbbf24, #d97706);
+  background: linear-gradient(180deg, #fbbf24, #f59e0b);
 }
 .fill-liquid.high {
-  background: linear-gradient(180deg, #fb923c, #ea580c);
+  background: linear-gradient(180deg, #fb923c, #f97316);
 }
 .fill-liquid.full {
-  background: linear-gradient(180deg, #f87171, #dc2626);
+  background: linear-gradient(180deg, #f87171, #ef4444);
 }
 .fill-liquid.unknown {
   background: var(--border);
@@ -546,29 +552,35 @@ button {
   letter-spacing: 0.04em;
 }
 .status-pill.empty {
-  background: rgba(148, 163, 184, 0.15);
-  color: #64748b;
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text2);
 }
 .status-pill.low {
-  background: rgba(34, 197, 94, 0.15);
-  color: #16a34a;
+  background: rgba(34, 197, 94, 0.12);
+  color: #22c55e;
 }
 .status-pill.medium {
-  background: rgba(245, 158, 11, 0.15);
-  color: #d97706;
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
 }
 .status-pill.high {
-  background: rgba(249, 115, 22, 0.15);
-  color: #ea580c;
+  background: rgba(251, 146, 60, 0.12);
+  color: #fb923c;
 }
 .status-pill.full {
-  background: rgba(239, 68, 68, 0.15);
-  color: #dc2626;
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
 }
 .status-pill.unknown {
-  background: rgba(148, 163, 184, 0.1);
-  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.08);
+  color: var(--text3);
 }
+
+/* Dark mode specific pill refinements */
+.dark .status-pill.low { background: rgba(34, 197, 94, 0.15); }
+.dark .status-pill.medium { background: rgba(251, 191, 36, 0.15); }
+.dark .status-pill.high { background: rgba(251, 146, 60, 0.15); }
+.dark .status-pill.full { background: rgba(248, 113, 113, 0.15); }
 
 /* ── Overall bar ───────────────────────────────────────────────────────────── */
 .bin-card-footer {
@@ -938,16 +950,16 @@ button {
   border-radius: 50%;
 }
 .legend-item.dry .legend-dot {
-  background: #f59e0b;
+  background: var(--chart-dry);
 }
 .legend-item.dry .legend-dot::before {
-  background: #f59e0b;
+  background: var(--chart-dry);
 }
 .legend-item.wet .legend-dot {
-  background: #3b82f6;
+  background: var(--chart-wet);
 }
 .legend-item.wet .legend-dot::before {
-  background: #3b82f6;
+  background: var(--chart-wet);
 }
 
 /* Side stats panel */
@@ -1303,4 +1315,80 @@ button {
 }
 .logout-btn:hover {
   opacity: 0.75;
+}
+
+/* ── Peak Hours Heatmap ─────────────────────────────────────────────────────── */
+.heatmap-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: 36px repeat(24, 1fr);
+  gap: 2px;
+  font-size: 10px;
+}
+
+.heatmap-cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  cursor: default;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.heatmap-cell:hover {
+  transform: scale(1.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  z-index: 10;
+  position: relative;
+}
+
+.heatmap-hour-label {
+  font-size: 9px;
+  color: var(--text-sec);
+  text-align: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  height: 32px;
+}
+
+.heatmap-day-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+}
+
+.heatmap-tooltip {
+  position: absolute;
+  background: var(--surface2);
+  color: var(--text-main);
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  border: 1px solid var(--border);
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-sec);
+}
+.heatmap-legend-bar {
+  width: 120px;
+  height: 10px;
+  border-radius: 4px;
+}
+
+/* Dark mode adjustments */
+.dark .heatmap-day-label, 
+.dark .heatmap-hour-label {
+  color: var(--text-sec);
 }

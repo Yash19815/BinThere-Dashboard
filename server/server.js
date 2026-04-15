@@ -650,6 +650,67 @@ app.get("/api/bins/:id/analytics", requireAuth, (req, res) => {
 });
 
 /**
+ * GET /api/bins/:id/heatmap
+ *
+ * Returns a 7×24 matrix of average fill events per (day-of-week, hour) slot.
+ * Days are 0=Monday … 6=Sunday (ISO week convention).
+ * Hours are 0–23 in IST.
+ */
+app.get("/api/bins/:id/heatmap", requireAuth, (req, res) => {
+  const binId = parseInt(req.params.id, 10);
+  const bin   = db.prepare("SELECT * FROM bins WHERE id = ?").get(binId);
+  if (!bin)
+    return res.status(404).json({ status: "error", message: "Bin not found" });
+
+  const compartment = req.query.compartment || null; // optional filter: 'dry' | 'wet'
+
+  const whereClause = compartment
+    ? "WHERE bin_id = ? AND compartment = ?"
+    : "WHERE bin_id = ?";
+  const params = compartment ? [binId, compartment] : [binId];
+
+  const rows = db.prepare(`
+    SELECT
+      -- Remap: Sun=0→6, Mon=1→0, Tue=2→1 … Sat=6→5
+      (CAST(strftime('%w', datetime(filled_at, '+330 minutes')) AS INTEGER) + 6) % 7 AS day,
+      CAST(strftime('%H', datetime(filled_at, '+330 minutes')) AS INTEGER)          AS hour,
+      COUNT(*) AS count
+    FROM fill_cycles
+    ${whereClause}
+    GROUP BY day, hour
+    ORDER BY day, hour
+  `).all(...params);
+
+  // Calculate how many full weeks of data exist for averaging
+  const range = db.prepare(`
+    SELECT
+      MIN(filled_at) AS earliest,
+      MAX(filled_at) AS latest
+    FROM fill_cycles
+    ${whereClause}
+  `).get(...params);
+
+  const weeks = range?.earliest
+    ? Math.max(
+        1,
+        Math.ceil(
+          (new Date(range.latest) - new Date(range.earliest)) / (7 * 24 * 60 * 60 * 1000)
+        )
+      )
+    : 1;
+
+  // Build 7×24 matrix initialised to 0
+  const matrix = Array.from({ length: 7 }, () => new Array(24).fill(0));
+  rows.forEach(({ day, hour, count }) => {
+    matrix[day][hour] = parseFloat((count / weeks).toFixed(2));
+  });
+
+  const max = Math.max(...matrix.flat());
+
+  res.json({ status: "success", data: matrix, max, weeks });
+});
+
+/**
  * GET /api/bins/:id
  * Returns full bin details plus the last 50 measurements (for the history modal).
  *

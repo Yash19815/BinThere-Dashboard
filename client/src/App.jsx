@@ -23,7 +23,7 @@
  *  VITE_WS_URL  – WebSocket server URL (default: ws://localhost:3001)
  *  VITE_API_URL – REST API base URL   (default: http://localhost:3001)
  */
-import { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import "./App.css";
 import { useAuth } from "./AuthContext.jsx";
 import LoginPage from "./LoginPage.jsx";
@@ -80,7 +80,7 @@ function linearPath(points) {
  *   refreshKey – Monotonically increasing counter; increment to trigger a refetch
  *   token      – JWT auth token for the Authorization header
  */
-function AnalyticsSection({ binId, refreshKey, token }) {
+function AnalyticsSection({ binId, refreshKey, token, darkMode }) {
   const [data, setData] = useState(null);
   const [range, setRange] = useState(7);
   const [loading, setLoading] = useState(false);
@@ -290,12 +290,28 @@ function AnalyticsSection({ binId, refreshKey, token }) {
               >
                 <defs>
                   <linearGradient id="grad-dry" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+                    <stop 
+                      offset="0%" 
+                      stopColor={darkMode ? "hsl(210, 95%, 64%)" : "hsl(210, 80%, 40%)"} 
+                      stopOpacity="0.25" 
+                    />
+                    <stop 
+                      offset="100%" 
+                      stopColor={darkMode ? "hsl(210, 95%, 64%)" : "hsl(210, 80%, 40%)"} 
+                      stopOpacity="0" 
+                    />
                   </linearGradient>
                   <linearGradient id="grad-wet" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.2" />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                    <stop 
+                      offset="0%" 
+                      stopColor={darkMode ? "hsl(145, 72%, 58%)" : "hsl(140, 65%, 40%)"} 
+                      stopOpacity="0.2" 
+                    />
+                    <stop 
+                      offset="100%" 
+                      stopColor={darkMode ? "hsl(145, 72%, 58%)" : "hsl(140, 65%, 40%)"} 
+                      stopOpacity="0" 
+                    />
                   </linearGradient>
                 </defs>
 
@@ -374,14 +390,14 @@ function AnalyticsSection({ binId, refreshKey, token }) {
                 <path
                   d={seriesPath(dryPts)}
                   fill="none"
-                  stroke="#f59e0b"
+                  stroke={darkMode ? "hsl(210, 95%, 64%)" : "hsl(210, 80%, 40%)"}
                   strokeWidth="2.5"
                   strokeLinejoin="round"
                 />
                 <path
                   d={seriesPath(wetPts)}
                   fill="none"
-                  stroke="#3b82f6"
+                  stroke={darkMode ? "hsl(145, 72%, 58%)" : "hsl(140, 65%, 40%)"}
                   strokeWidth="2.5"
                   strokeLinejoin="round"
                 />
@@ -395,8 +411,8 @@ function AnalyticsSection({ binId, refreshKey, token }) {
                         cx={pt.x}
                         cy={pt.y}
                         r={hoveredIdx === i ? 6.5 : 4.5}
-                        fill="#f59e0b"
-                        stroke="white"
+                        fill={darkMode ? "hsl(210, 95%, 64%)" : "hsl(210, 80%, 40%)"}
+                        stroke={darkMode ? "#1a1d2e" : "white"}
                         strokeWidth="1.5"
                         style={{ transition: "r 0.1s" }}
                       />
@@ -410,8 +426,8 @@ function AnalyticsSection({ binId, refreshKey, token }) {
                         cx={pt.x}
                         cy={pt.y}
                         r={hoveredIdx === i ? 6.5 : 4.5}
-                        fill="#3b82f6"
-                        stroke="white"
+                        fill={darkMode ? "hsl(145, 72%, 58%)" : "hsl(140, 65%, 40%)"}
+                        stroke={darkMode ? "#1a1d2e" : "white"}
                         strokeWidth="1.5"
                         style={{ transition: "r 0.1s" }}
                       />
@@ -481,7 +497,7 @@ function AnalyticsSection({ binId, refreshKey, token }) {
                           cx={tx + 16}
                           cy={ty + 29}
                           r="4"
-                          fill="#f59e0b"
+                          fill={darkMode ? "hsl(210, 95%, 64%)" : "hsl(210, 80%, 40%)"}
                         />
                         <text
                           x={tx + 24}
@@ -498,7 +514,7 @@ function AnalyticsSection({ binId, refreshKey, token }) {
                           textAnchor="end"
                           fontSize="11"
                           fontWeight="700"
-                          fill="#f59e0b"
+                          fill={darkMode ? "hsl(210, 95%, 64%)" : "hsl(210, 80%, 40%)"}
                         >
                           {dryVal}
                         </text>
@@ -506,7 +522,7 @@ function AnalyticsSection({ binId, refreshKey, token }) {
                           cx={tx + 16}
                           cy={ty + 47}
                           r="4"
-                          fill="#3b82f6"
+                          fill={darkMode ? "hsl(145, 72%, 58%)" : "hsl(140, 65%, 40%)"}
                         />
                         <text
                           x={tx + 24}
@@ -523,7 +539,7 @@ function AnalyticsSection({ binId, refreshKey, token }) {
                           textAnchor="end"
                           fontSize="11"
                           fontWeight="700"
-                          fill="#3b82f6"
+                          fill={darkMode ? "hsl(145, 72%, 58%)" : "hsl(140, 65%, 40%)"}
                         >
                           {wetVal}
                         </text>
@@ -565,18 +581,18 @@ function AnalyticsSection({ binId, refreshKey, token }) {
             </>
           )}
           <div className="stats-item wet">
-            <span className="stats-dot" style={{ background: "#3b82f6" }} />
+            <span className="stats-dot" style={{ background: darkMode ? "hsl(145, 72%, 58%)" : "hsl(140, 65%, 40%)" }} />
             <span className="stats-name">Wet Waste</span>
-            <span className="stats-val" style={{ color: "#3b82f6" }}>
+            <span className="stats-val" style={{ color: darkMode ? "hsl(145, 72%, 58%)" : "hsl(140, 65%, 40%)" }}>
               {data?.latest?.wet !== null && data?.latest?.wet !== undefined
                 ? `${data.latest.wet}`
                 : "—"}
             </span>
           </div>
           <div className="stats-item dry">
-            <span className="stats-dot" style={{ background: "#f59e0b" }} />
+            <span className="stats-dot" style={{ background: darkMode ? "hsl(210, 95%, 64%)" : "hsl(210, 80%, 40%)" }} />
             <span className="stats-name">Dry Waste</span>
-            <span className="stats-val" style={{ color: "#f59e0b" }}>
+            <span className="stats-val" style={{ color: darkMode ? "hsl(210, 95%, 64%)" : "hsl(210, 80%, 40%)" }}>
               {data?.latest?.dry !== null && data?.latest?.dry !== undefined
                 ? `${data.latest.dry}`
                 : "—"}
@@ -1120,6 +1136,152 @@ function Header({ bins, darkMode, onToggleDark, wsStatus, user, onLogout }) {
   );
 }
 
+const DAYS  = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const HOURS = Array.from({ length: 24 }, (_, i) =>
+  i === 0 ? "12am" : i < 12 ? `${i}am` : i === 12 ? "12pm" : `${i - 12}pm`
+);
+
+function cellColor(value, max, type = "dry", isDark = false) {
+  if (max === 0 || value === 0) {
+    return isDark ? "hsl(220, 22%, 14%)" : "hsl(0, 0%, 95%)";
+  }
+
+  const intensity = value / max; // 0.0 – 1.0
+
+  if (type === "dry") {
+    if (isDark) {
+      // Dark mode: hsl(210, 75%, 24%) to hsl(210, 95%, 64%)
+      const sat = Math.round(75 + intensity * 20);
+      const light = Math.round(24 + intensity * 40);
+      return `hsl(210, ${sat}%, ${light}%)`;
+    } else {
+      // Light mode: White → deep blue
+      const lightness = Math.round(95 - intensity * 55); 
+      return `hsl(210, 80%, ${lightness}%)`;
+    }
+  } else {
+    if (isDark) {
+      // Dark mode: hsl(145, 55%, 22%) to hsl(145, 72%, 58%)
+      const sat = Math.round(55 + intensity * 17);
+      const light = Math.round(22 + intensity * 36);
+      return `hsl(145, ${sat}%, ${light}%)`;
+    } else {
+      // Light mode: White → deep green
+      const lightness = Math.round(95 - intensity * 55);
+      return `hsl(140, 65%, ${lightness}%)`;
+    }
+  }
+}
+
+function PeakHoursHeatmap({ binId, token, darkMode }) {
+  const [heatmap, setHeatmap] = useState(null);
+  const [compartment, setCompartment] = useState("dry"); // 'dry' | 'wet'
+  const [tooltip, setTooltip] = useState(null);
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+  useEffect(() => {
+    let active = true;
+    const params = compartment ? `?compartment=${compartment}` : "";
+    fetch(`${API_URL}/api/bins/${binId}/heatmap${params}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        if (active && res.status === "success") {
+          setHeatmap(res);
+        }
+      });
+    return () => { active = false };
+  }, [binId, compartment, token]);
+
+  if (!heatmap) return <p style={{ padding: "0 24px" }}>Loading heatmap...</p>;
+
+  const { data, max, weeks } = heatmap;
+
+  return (
+    <div className="analytics-section" style={{ marginTop: "24px" }}>
+      <div className="analytics-header">
+        <div>
+          <h2 className="analytics-title">Peak Fill Hours</h2>
+          <p className="analytics-sub">Average fill cycles by time of day</p>
+        </div>
+        <div className="heatmap-controls range-select-wrap">
+          <select
+            className="range-select"
+            value={compartment}
+            onChange={(e) => setCompartment(e.target.value)}
+          >
+            <option value="dry">Dry Waste</option>
+            <option value="wet">Wet Waste</option>
+          </select>
+        </div>
+      </div>
+      
+      <div className="analytics-body" style={{ padding: "0 24px 24px 24px" }}>
+        <div className="heatmap-wrapper">
+          <div className="heatmap-meta" style={{ marginBottom: "12px", fontSize: "14px", color: "var(--text-sec)" }}>
+            Based on <strong>{weeks}</strong> week{weeks !== 1 ? "s" : ""} of overall data
+          </div>
+
+          <div className="heatmap-grid">
+            <div className="heatmap-corner" />
+            {HOURS.map((h) => (
+              <div key={h} className="heatmap-hour-label">{h}</div>
+            ))}
+
+            {data.map((row, dayIdx) => (
+              <React.Fragment key={dayIdx}>
+                <div className="heatmap-day-label">{DAYS[dayIdx]}</div>
+                {row.map((value, hourIdx) => (
+                  <div
+                    key={hourIdx}
+                    className="heatmap-cell"
+                    style={{ backgroundColor: cellColor(value, max, compartment, darkMode) }}
+                    onMouseEnter={(e) => {
+                      const rect = e.target.getBoundingClientRect();
+                      setTooltip({
+                        day:   DAYS[dayIdx],
+                        hour:  HOURS[hourIdx],
+                        value,
+                        // Position relative to the cell
+                        x: e.nativeEvent.offsetX,
+                        y: e.nativeEvent.offsetY,
+                        rect
+                      })
+                    }}
+                    onMouseLeave={() => setTooltip(null)}
+                  />
+                ))}
+              </React.Fragment>
+            ))}
+          </div>
+
+          {tooltip && (
+            <div
+              className="heatmap-tooltip"
+              style={{ position: 'fixed', top: tooltip.rect.top - 45, left: tooltip.rect.left + 12 }}
+            >
+              <strong>{tooltip.day} @ {tooltip.hour}</strong>
+              <br />
+              Avg fills: <strong>{tooltip.value.toFixed(2)}</strong> / week
+            </div>
+          )}
+
+          <div className="heatmap-legend" style={{ marginTop: "16px" }}>
+            <span>0</span>
+            <div className="heatmap-legend-bar" style={{
+              background: compartment === "dry"
+                ? `linear-gradient(to right, ${cellColor(0, max, "dry", darkMode)}, ${cellColor(max || 1, max || 1, "dry", darkMode)})`
+                : `linear-gradient(to right, ${cellColor(0, max, "wet", darkMode)}, ${cellColor(max || 1, max || 1, "wet", darkMode)})`
+            }} />
+            <span>{(max || 0).toFixed(1)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── App ───────────────────────────────────────────────────────────────────────
 /**
  * Root application component.
@@ -1278,7 +1440,9 @@ export default function App() {
               binId={1}
               refreshKey={analyticsKey}
               token={token}
+              darkMode={darkMode}
             />
+            <PeakHoursHeatmap binId={1} token={token} darkMode={darkMode} />
             <div className="bin-grid">
               {bins.map((bin) => (
                 <BinCard
