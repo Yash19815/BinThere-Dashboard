@@ -1,5 +1,9 @@
+param (
+    [int]$BinId = 1
+)
+
 # =============================================================================
-# test-sensor.ps1 — BinThere Dual-Sensor Simulation Script
+# test-sensor.ps1 - BinThere Dual-Sensor Simulation Script
 # =============================================================================
 #
 # PURPOSE:
@@ -8,7 +12,7 @@
 #   real-time dashboard updates.
 #
 # USAGE:
-#   .\test-sensor.ps1
+#   .\test-sensor.ps1 [-BinId <id>]
 #   (Press Ctrl+C to stop)
 #
 # PREREQUISITES:
@@ -16,49 +20,75 @@
 #   - Server must be reachable at http://localhost:3001
 #
 # WHAT IT DOES:
-#   Every 2 seconds, sends a POST to /api/sensor-data with:
-#     sensor1 — random distance 5–50 cm  → mapped to Dry Waste compartment
-#     sensor2 — random distance 5–50 cm  → mapped to Wet Waste compartment
+#   Every 2 seconds, sends a POST to /api/bins/<id>/measurement with:
+#     raw_distance_cm (random 5-50 cm) -> mapped to Dry Waste
+#     raw_distance_cm (random 5-50 cm) -> mapped to Wet Waste
 #
 #   The server converts distance to fill % using:
-#     fill % = ((max_height_cm - distance_cm) / max_height_cm) × 100
+#     fill % = ((max_height_cm - distance_cm) / max_height_cm) * 100
 #   With max_height_cm = 50:
-#     distance=5  cm → ~90 % full   (near sensor = nearly full)
-#     distance=50 cm →   0 % full   (far from sensor = empty)
+#     distance=5  cm -> ~90 % full   (near sensor = nearly full)
+#     distance=50 cm ->   0 % full   (far from sensor = empty)
 #
 # OUTPUT:
 #   [HH:mm:ss] Dry: <dist> cm (<fill>%)  |  Wet: <dist> cm (<fill>%)
 #
 # =============================================================================
 
-# Backend API endpoint for legacy dual-sensor data
-$baseUrl = "http://localhost:3001/api/sensor-data"
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Continue"
 
-Write-Host "Starting dual-sensor simulation for Dustbin #001..." -ForegroundColor Green
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$EnvPath = Join-Path $ScriptDir "server\.env"
+$DeviceKey = ""
+
+if ((Test-Path $EnvPath)) {
+    $EnvLines = Get-Content $EnvPath
+    foreach ($line in $EnvLines) {
+        if (($line -match "^DEVICE_API_KEY=(.*)$")) {
+            $DeviceKey = $matches[1].Trim("`"'")
+        }
+    }
+}
+
+# Backend API endpoint for measurement data
+$baseUrl = "http://localhost:3001/api/bins/$BinId/measurement"
+
+Write-Host "Starting dual-sensor simulation for Dustbin #$( '{0:D3}' -f $BinId )..." -ForegroundColor Green
+if (-not $DeviceKey) { Write-Warning "[WARN] No DEVICE_API_KEY found in server/.env. Auth might fail." }
 Write-Host "Press Ctrl+C to stop`n" -ForegroundColor Yellow
 
 while ($true) {
-    # Generate random distances in the HC-SR04 reliable range (5–50 cm)
+    # Generate random distances in the HC-SR04 reliable range (5-50 cm)
     # The fractional part (.99 * random) adds sub-centimetre precision
-    $sensor1 = [math]::Round((Get-Random -Minimum 5 -Maximum 50) + (Get-Random) * 0.99, 2)
-    $sensor2 = [math]::Round((Get-Random -Minimum 5 -Maximum 50) + (Get-Random) * 0.99, 2)
+    $sensor1 = [math]::Round(((Get-Random -Minimum 5 -Maximum 50) + ((Get-Random) * 0.99)), 2)
+    $sensor2 = [math]::Round(((Get-Random -Minimum 5 -Maximum 50) + ((Get-Random) * 0.99)), 2)
 
-    # Build the JSON payload matching the /api/sensor-data contract
-    $body = @{ sensor1 = $sensor1; sensor2 = $sensor2 } | ConvertTo-Json
+    $headers = @{}
+    if ($DeviceKey) {
+        $headers["X-Device-Key"] = $DeviceKey
+    }
 
     try {
-        # POST to the server; response includes computed fill percentages
-        $response  = Invoke-RestMethod -Uri $baseUrl -Method POST -Body $body -ContentType "application/json"
-        $ts        = Get-Date -Format "HH:mm:ss"
-        $dryFill   = $response.data.dry.fill_level_percent
-        $wetFill   = $response.data.wet.fill_level_percent
+        # Dry Compartment
+        $bodyDry = @{ compartment = "dry"; raw_distance_cm = $sensor1 } | ConvertTo-Json -Depth 10
+        $resDry = Invoke-RestMethod -Uri $baseUrl -Method POST -Body $bodyDry -ContentType "application/json" -Headers $headers
 
-        # Print a timestamped summary line
-        Write-Host "[$ts] Dry: ${sensor1} cm ($dryFill%)  |  Wet: ${sensor2} cm ($wetFill%)" -ForegroundColor Cyan
+        # Wet Compartment
+        $bodyWet = @{ compartment = "wet"; raw_distance_cm = $sensor2 } | ConvertTo-Json -Depth 10
+        $resWet = Invoke-RestMethod -Uri $baseUrl -Method POST -Body $bodyWet -ContentType "application/json" -Headers $headers
+
+        $ts = Get-Date -Format "HH:mm:ss"
+        if (($resDry) -and ($resWet)) {
+            $dryFill = $resDry.data.fill_level_percent
+            $wetFill = $resWet.data.fill_level_percent
+            # Print a timestamped summary line
+            Write-Host "[$ts] Dry: ${sensor1} cm ($dryFill%)  |  Wet: ${sensor2} cm ($wetFill%)" -ForegroundColor Cyan
+        }
     }
     catch {
-        # Server unreachable or returned an error — display the reason and keep retrying
-        Write-Host "Error: $_" -ForegroundColor Red
+        # Server unreachable or returned an error - display the reason and keep retrying
+        Write-Warning "Error: $_"
     }
 
     # Wait before the next simulated reading cycle

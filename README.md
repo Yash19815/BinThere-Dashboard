@@ -195,10 +195,10 @@ The system utilizes an ESP32 microcontroller to interface with diverse sensors a
 ## 🧪 Simulation & Testing
 
 **Simulate Hardware (PowerShell)**:
-Run the interactive simulation script to push randomized measurements to the dashboard:
+Run the interactive simulation script to push randomized measurements to the dashboard. It will automatically detect authentication keys and you can specify a target bin:
 
 ```powershell
-.\test-sensor.ps1
+.\test-sensor.ps1 -BinId 1
 ```
 
 **Verify API Liveness**:

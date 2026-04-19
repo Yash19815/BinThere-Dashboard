@@ -26,6 +26,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 Changes that are complete but not yet deployed to production.
 
+### Changed
+
+- Re-wrote `test-sensor.ps1` incorporating `-BinId` parameters natively simulating measurements across the dynamic dustbin mapping instead of the legacy single-bin endpoint. Automatic `server/.env` credential parsing was implemented to securely interact with the updated API.
+
 ---
 
 ## [v2.2.0] — 2026-04-19
