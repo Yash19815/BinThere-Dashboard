@@ -2,6 +2,7 @@
 
 | Version | Date       | Type           | Summary                                                                                          |
 | ------- | ---------- | -------------- | ------------------------------------------------------------------------------------------------ |
+| v2.3.1  | 2026-04-19 | 📝 Docs       | Updated License from MIT to Apache 2.0
 | v2.3.0  | 2026-04-19 | 🎨 UI          | "Frosted Control Room" glassmorphism overhaul and light theme elimination       |
 | v2.2.0  | 2026-04-19 | 🎨 UI          | Redesigned Utilization Score card, Export to Excel UI, and native dark-mode icon compatibility   |
 | v2.1.0  | 2026-04-19 | ✨ Feature     | Dynamic dustbin management, contributing guidelines, and ESP32 codebase renaming                 |
@@ -22,7 +23,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
+ 
+## [v2.3.1] — 2026-04-19
 
+### Change
+Change Usage License from MIT to Apache 2.0
 ## [v2.3.0] — 2026-04-19
 
 ### Summary
