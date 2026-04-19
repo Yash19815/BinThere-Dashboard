@@ -2,6 +2,7 @@
 
 | Version | Date       | Type           | Summary                                                                                          |
 | ------- | ---------- | -------------- | ------------------------------------------------------------------------------------------------ |
+| v2.3.0  | 2026-04-19 | 🎨 UI          | "Frosted Control Room" glassmorphism overhaul and light theme elimination       |
 | v2.2.0  | 2026-04-19 | 🎨 UI          | Redesigned Utilization Score card, Export to Excel UI, and native dark-mode icon compatibility   |
 | v2.1.0  | 2026-04-19 | ✨ Feature     | Dynamic dustbin management, contributing guidelines, and ESP32 codebase renaming                 |
 | v2.0.0  | 2026-04-17 | 🚀 Update      | Core infrastructure revamp: automated setup scripts, auto-host detection, OTA monitor, licensing |
@@ -22,17 +23,31 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
-## [Unreleased]
+## [v2.3.0] — 2026-04-19
 
-Changes that are complete but not yet deployed to production.
+### Summary
+
+Major visual overhaul transitioning to a premium "Frosted Control Room" glassmorphism theme and consolidating the application into a single, high-fidelity dark-mode experience.
+
+### Added
+
+- Shipped **"Frosted Control Room"** glassmorphism theme with Apple-inspired frosted layers, subtle blurs, and refined border opacities.
+- Unified glass tokens (`--glass-bg`, `--glass-blur`, `--glass-shadow`) across all dashboard surfaces for a professional, cohesive look.
 
 ### Changed
 
-- Re-wrote `test-sensor.ps1` incorporating `-BinId` parameters natively simulating measurements across the dynamic dustbin mapping instead of the legacy single-bin endpoint. Automatic `server/.env` credential parsing was implemented to securely interact with the updated API.
-- **Frontend Architecture**: Completely refactored the monolithic `App.jsx` into modular components separated by domains (`hooks/`, `components/dashboard/`, `components/ui/`, `components/modals/`, etc.) improving maintainability.
-- **UI/UX**: Transitioned visual style from 'Utilitarian Glass' to 'Industrial Clean' utilizing solid surfaces, subtle scalable elevation, removing neon glows.
-- **Accessibility**: Implemented global `prefers-reduced-motion` support restricting ping and pulse animation outputs conditionally.
-- **Performance**: Applied strict `React.memo` constraints, dynamic primitive prop generation hooks, and `useMemo` strictly isolating SVG path calculations for WebSocket resistance.
+- **Theme Consolidation**: Completely eliminated the light theme option. The application is now exclusively dark-mode by design to maximize visual impact and readability.
+- **Design System Refinement**: Replaced the 'Industrial Clean' / 'Utilitarian Glass' styles with a deeper, more refined frosted glass system. Removed all unnecessary neon glows and aggressive inset highlights.
+- **Frontend Architecture**: Removed `darkMode` state logic, context providers, and toggle buttons from the application core to reduce bundle size and logic complexity.
+- **Component Styling**: Updated `AnalyticsSection`, `PeakHoursHeatmap`, `SummaryStats`, and `ExportToExcel` to natively support the forced-glass theme without conditional overrides.
+- **Sensor Simulation**: Re-wrote `test-sensor.ps1` incorporating `-BinId` parameters natively simulating measurements across the dynamic dustbin mapping.
+- **Modularization**: Finalized the refactoring of `App.jsx` into modular domain-specific components.
+
+### Accessibility & Performance
+
+- Implemented global `prefers-reduced-motion` support restricting ping and pulse animation outputs.
+- Applied strict `React.memo` and `useMemo` constraints isolating SVG path calculations for real-time WebSocket data.
+- Optimized `backdrop-filter` rendering by disabling blurs on mobile devices (max-width: 640px) to ensure smooth 60fps performance.
 
 ---
 
