@@ -1,6 +1,6 @@
 # BinThere — Smart Waste Intelligence Dashboard
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-yellow.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 [![Node.js](https://img.shields.io/badge/Node.js-v18+-green)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18-blue)](https://react.dev/)
 [![ESP32](https://img.shields.io/badge/Hardware-ESP32-red)](https://www.espressif.com/)
@@ -249,4 +249,4 @@ A:
 
 ## License
 
-Distributed under the **MIT License**. See `LICENSE` for more information.
+Distributed under the ** Apache License Version 2.0**. See `LICENSE` for more information.
