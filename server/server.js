@@ -136,6 +136,16 @@ if (!existingAdmin) {
   console.log(`✅ Default admin user "${adminUsername}" created`);
 }
 
+// ── Seed Default Bin ────────────────────────────────────────────────────────
+// Ensure at least one bin exists by default on first run.
+const binCount = db.prepare("SELECT COUNT(*) AS count FROM bins").get().count;
+if (binCount === 0) {
+  db.prepare(
+    "INSERT INTO bins (name, location, max_height_cm) VALUES (?, ?, ?)",
+  ).run("Dustbin #001", "Main Campus", 25);
+  console.log("✅ Default dustbin created");
+}
+
 // ── JWT Helpers ──────────────────────────────────────────────────────────────
 
 const JWT_SECRET = process.env.JWT_SECRET || "change-me-in-production";
@@ -560,9 +570,8 @@ app.get("/api/health", requireAuth, (req, res) => {
 
 /**
  * GET /api/bins
- * Returns all bins with their latest compartment state.
- * Currently always returns one bin (Dustbin #001).
- * Designed to be extended when more bins are added.
+ * Returns all registered dustbins with their latest compartment states.
+ * Fetches data dynamically from the 'bins' table.
  */
 app.get("/api/bins", requireAuth, (req, res) => {
   const bins = db.prepare("SELECT * FROM bins").all();

@@ -2,6 +2,7 @@
 
 | Version | Date       | Type           | Summary                                                                                          |
 | ------- | ---------- | -------------- | ------------------------------------------------------------------------------------------------ |
+| v2.4.1  | 2026-04-20 | ✨ Feature     | Default Bin Seeding: Ensures 1 dustbin exists on first run while supporting dynamic additions     |
 | v2.4.0  | 2026-04-20 | 📊 Export      | Premium Reporting: Executive Summaries, predictive maintenance analytics, and date presets       |
 | v2.3.1  | 2026-04-19 | 📝 Docs       | Updated License from MIT to Apache 2.0
 | v2.3.0  | 2026-04-19 | 🎨 UI          | "Frosted Control Room" glassmorphism overhaul and light theme elimination       |
@@ -22,6 +23,22 @@
 All notable changes to the BinThere Dashboard are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
+
+---
+
+## [v2.4.1] — 2026-04-20
+
+### Summary
+
+Introduced proactive database seeding for dustbins to ensure a seamless "Out of the Box" experience while maintaining full support for dynamic user additions and persistence.
+
+### Added
+
+- **Automatic Bin Seeding**: The backend now detects if the `bins` table is empty on startup and automatically initializes "Dustbin #001". This ensures the dashboard is never unexpectedly empty on first run.
+
+### Changed
+
+- **Dynamic Documentation**: Updated API documentation and internal comments to reflect the shift from a hardcoded single-bin assumption to a fully dynamic, persistent multi-bin architecture.
 
 ---
 
