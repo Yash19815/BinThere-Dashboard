@@ -1,8 +1,13 @@
-import React from 'react';
-import { getLevel, getStatusLabel } from '../../utils/themeUtils';
-import { timeAgo } from '../../utils/formatters';
+import React from "react";
+import { getLevel, getStatusLabel } from "../../utils/themeUtils";
+import { timeAgo } from "../../utils/formatters";
 
-export default function CompartmentPanel({ label, pct, rawDistance, lastUpdated }) {
+export default function CompartmentPanel({
+  label,
+  pct,
+  rawDistance,
+  lastUpdated,
+}) {
   const level = getLevel(pct);
 
   return (
@@ -32,9 +37,7 @@ export default function CompartmentPanel({ label, pct, rawDistance, lastUpdated 
             {pct !== null ? `${pct.toFixed(0)}%` : "—"}
           </span>
           <span className="dist-label">
-            {rawDistance !== undefined
-              ? `${rawDistance} cm`
-              : ""}
+            {rawDistance !== undefined ? `${rawDistance} cm` : ""}
           </span>
         </div>
       </div>

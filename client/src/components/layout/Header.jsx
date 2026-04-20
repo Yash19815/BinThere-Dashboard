@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import NotificationPanel from './NotificationPanel';
-import { ALERT_THRESHOLD } from '../../utils/constants';
+import React, { useState } from "react";
+import NotificationPanel from "./NotificationPanel";
+import { ALERT_THRESHOLD } from "../../utils/constants";
 
 /**
  * Application header bar containing the logo, WebSocket status indicator,

@@ -1,7 +1,7 @@
-import React from 'react';
-import HistoryChart from './HistoryChart';
-import { formatDate, formatTime } from '../../utils/formatters';
-import { getLevel, getStatusLabel } from '../../utils/themeUtils';
+import React from "react";
+import HistoryChart from "./HistoryChart";
+import { formatDate, formatTime } from "../../utils/formatters";
+import { getLevel, getStatusLabel } from "../../utils/themeUtils";
 
 /**
  * Full-screen overlay modal showing a bin's measurement history.

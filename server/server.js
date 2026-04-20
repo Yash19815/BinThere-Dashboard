@@ -47,7 +47,6 @@ dotenv.config();
 
 /** Total number of bins to support, defaults to 1 if not specified in .env. */
 
-
 // ESM-compatible __dirname equivalent
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -114,7 +113,6 @@ db.exec(`
     created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
   );
 `);
-
 
 /**
  * Seed a default admin user on first startup.
@@ -586,11 +584,15 @@ app.get("/api/bins", requireAuth, (req, res) => {
 app.post("/api/bins", requireAuth, (req, res) => {
   const { name, location, max_height_cm = 25 } = req.body;
   if (!name || !location) {
-    return res.status(400).json({ status: "error", message: "Name and location are required" });
+    return res
+      .status(400)
+      .json({ status: "error", message: "Name and location are required" });
   }
 
   const result = db
-    .prepare("INSERT INTO bins (name, location, max_height_cm) VALUES (?, ?, ?)")
+    .prepare(
+      "INSERT INTO bins (name, location, max_height_cm) VALUES (?, ?, ?)",
+    )
     .run(name.trim(), location.trim(), max_height_cm);
 
   const newBin = getBinWithCompartments(result.lastInsertRowid);
@@ -605,7 +607,8 @@ app.post("/api/bins", requireAuth, (req, res) => {
 app.delete("/api/bins/:id", requireAuth, (req, res) => {
   const binId = parseInt(req.params.id, 10);
   const bin = db.prepare("SELECT * FROM bins WHERE id = ?").get(binId);
-  if (!bin) return res.status(404).json({ status: "error", message: "Bin not found" });
+  if (!bin)
+    return res.status(404).json({ status: "error", message: "Bin not found" });
 
   db.transaction(() => {
     db.prepare("DELETE FROM measurements WHERE bin_id = ?").run(binId);
@@ -656,15 +659,20 @@ app.patch("/api/bins/:id", requireAuth, (req, res) => {
  */
 app.get("/api/analytics/utilization", requireAuth, (req, res) => {
   try {
-    const row = db.prepare(`
+    const row = db
+      .prepare(
+        `
       SELECT AVG(fill_level_percent) as avgFill
       FROM measurements
       WHERE timestamp >= datetime('now', '-24 hours')
-    `).get();
+    `,
+      )
+      .get();
 
     res.json({
       status: "success",
-      utilization_score: row && row.avgFill !== null ? Math.round(row.avgFill) : 0
+      utilization_score:
+        row && row.avgFill !== null ? Math.round(row.avgFill) : 0,
     });
   } catch (err) {
     res.status(500).json({ status: "error", message: err.message });
@@ -760,7 +768,7 @@ app.get("/api/bins/:id/analytics", requireAuth, (req, res) => {
  */
 app.get("/api/bins/:id/heatmap", requireAuth, (req, res) => {
   const binId = parseInt(req.params.id, 10);
-  const bin   = db.prepare("SELECT * FROM bins WHERE id = ?").get(binId);
+  const bin = db.prepare("SELECT * FROM bins WHERE id = ?").get(binId);
   if (!bin)
     return res.status(404).json({ status: "error", message: "Bin not found" });
 
@@ -771,7 +779,9 @@ app.get("/api/bins/:id/heatmap", requireAuth, (req, res) => {
     : "WHERE bin_id = ?";
   const params = compartment ? [binId, compartment] : [binId];
 
-  const rows = db.prepare(`
+  const rows = db
+    .prepare(
+      `
     SELECT
       -- Remap: Sun=0→6, Mon=1→0, Tue=2→1 … Sat=6→5
       (CAST(strftime('%w', datetime(filled_at, '+330 minutes')) AS INTEGER) + 6) % 7 AS day,
@@ -781,23 +791,30 @@ app.get("/api/bins/:id/heatmap", requireAuth, (req, res) => {
     ${whereClause}
     GROUP BY day, hour
     ORDER BY day, hour
-  `).all(...params);
+  `,
+    )
+    .all(...params);
 
   // Calculate how many full weeks of data exist for averaging
-  const range = db.prepare(`
+  const range = db
+    .prepare(
+      `
     SELECT
       MIN(filled_at) AS earliest,
       MAX(filled_at) AS latest
     FROM fill_cycles
     ${whereClause}
-  `).get(...params);
+  `,
+    )
+    .get(...params);
 
   const weeks = range?.earliest
     ? Math.max(
         1,
         Math.ceil(
-          (new Date(range.latest) - new Date(range.earliest)) / (7 * 24 * 60 * 60 * 1000)
-        )
+          (new Date(range.latest) - new Date(range.earliest)) /
+            (7 * 24 * 60 * 60 * 1000),
+        ),
       )
     : 1;
 
@@ -973,16 +990,18 @@ const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // UTC+05:30
 
 /** Returns a human-readable IST timestamp string for console logs. */
 function toISTString(date = new Date()) {
-  return date.toLocaleString("en-IN", {
-    timeZone: "Asia/Kolkata",
-    year:     "numeric",
-    month:    "2-digit",
-    day:      "2-digit",
-    hour:     "2-digit",
-    minute:   "2-digit",
-    second:   "2-digit",
-    hour12:   false,
-  }) + " IST";
+  return (
+    date.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    }) + " IST"
+  );
 }
 // ── Daily Data Purge ─────────────────────────────────────────────────────────
 
@@ -1006,17 +1025,27 @@ function purgeOldData() {
   console.log("─".repeat(60));
 
   // ── Pre-purge counts ──────────────────────────────────────────
-  const mTotal   = db.prepare("SELECT COUNT(*) AS c FROM measurements").get().c;
-  const mOld     = db.prepare("SELECT COUNT(*) AS c FROM measurements WHERE timestamp < datetime('now', '-1 year')").get().c;
-  const fcTotal  = db.prepare("SELECT COUNT(*) AS c FROM fill_cycles").get().c;
-  const fcOld    = db.prepare("SELECT COUNT(*) AS c FROM fill_cycles WHERE filled_at < datetime('now', '-1 year')").get().c;
+  const mTotal = db.prepare("SELECT COUNT(*) AS c FROM measurements").get().c;
+  const mOld = db
+    .prepare(
+      "SELECT COUNT(*) AS c FROM measurements WHERE timestamp < datetime('now', '-1 year')",
+    )
+    .get().c;
+  const fcTotal = db.prepare("SELECT COUNT(*) AS c FROM fill_cycles").get().c;
+  const fcOld = db
+    .prepare(
+      "SELECT COUNT(*) AS c FROM fill_cycles WHERE filled_at < datetime('now', '-1 year')",
+    )
+    .get().c;
 
   console.log("📊 Pre-purge counts:");
   console.log(`   measurements : ${mTotal} total  |  ${mOld} to delete`);
   console.log(`   fill_cycles  : ${fcTotal} total  |  ${fcOld} to delete`);
 
   if (mOld === 0 && fcOld === 0) {
-    console.log("✅ Nothing to purge — all records are within the 1-year window.");
+    console.log(
+      "✅ Nothing to purge — all records are within the 1-year window.",
+    );
     console.log("─".repeat(60));
     scheduleDailyPurge();
     return;
@@ -1024,13 +1053,21 @@ function purgeOldData() {
 
   // ── Run purge inside a transaction ───────────────────────────
   const purge = db.transaction(() => {
-    const m  = db.prepare("DELETE FROM measurements WHERE timestamp < datetime('now', '-1 year')").run();
-    const fc = db.prepare("DELETE FROM fill_cycles WHERE filled_at  < datetime('now', '-1 year')").run();
+    const m = db
+      .prepare(
+        "DELETE FROM measurements WHERE timestamp < datetime('now', '-1 year')",
+      )
+      .run();
+    const fc = db
+      .prepare(
+        "DELETE FROM fill_cycles WHERE filled_at  < datetime('now', '-1 year')",
+      )
+      .run();
     return { measurements: m.changes, fill_cycles: fc.changes };
   });
 
   try {
-    const t0      = Date.now();
+    const t0 = Date.now();
     const deleted = purge();
     const elapsed = Date.now() - t0;
 
@@ -1040,7 +1077,7 @@ function purgeOldData() {
     console.log(`   Completed in : ${elapsed} ms`);
 
     // ── Post-purge counts ──────────────────────────────────────
-    const mAfter  = db.prepare("SELECT COUNT(*) AS c FROM measurements").get().c;
+    const mAfter = db.prepare("SELECT COUNT(*) AS c FROM measurements").get().c;
     const fcAfter = db.prepare("SELECT COUNT(*) AS c FROM fill_cycles").get().c;
     console.log("📊 Post-purge counts:");
     console.log(`   measurements : ${mAfter} remaining`);
@@ -1051,7 +1088,6 @@ function purgeOldData() {
     const tv = Date.now();
     db.exec("VACUUM");
     console.log(`✅ VACUUM complete (${Date.now() - tv} ms)`);
-
   } catch (err) {
     console.error("❌ Purge transaction failed:", err);
   }
@@ -1076,7 +1112,7 @@ function scheduleDailyPurge() {
 
   console.log(
     `⏰ Next data purge scheduled at midnight ` +
-    `(in ${Math.round(msUntilMidnight / 1000 / 60)} minutes).`
+      `(in ${Math.round(msUntilMidnight / 1000 / 60)} minutes).`,
   );
 
   setTimeout(() => {

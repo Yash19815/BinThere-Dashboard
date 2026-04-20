@@ -148,19 +148,19 @@ No authentication required.
 
 Requires `Authorization: Bearer <token>` or `X-Device-Key: <key>`.
 
-| Method | Path                        | Description                              |
-| :----- | :-------------------------- | :--------------------------------------- |
-| `GET`  | `/api/auth/me`              | Resolve current user profile             |
-| `GET`  | `/api/health`               | System liveness & connection probe       |
-| `GET`  | `/api/bins`                 | Retrieve all bins & current states       |
-| `GET`  | `/api/bins/:id`             | Single bin details + measurement history |
-| `GET`  | `/api/bins/:id/analytics`   | Daily fill-cycle trend data              |
-| `GET`  | `/api/bins/:id/heatmap`     | 24x7 peak hours matrix                   |
-| `POST` | `/api/bins`                 | Register a new dustbin (Admin)           |
-| `PATCH`| `/api/bins/:id`             | Update bin metadata (e.g., location)     |
-| `DELETE`| `/api/bins/:id`            | Remove a bin and cascade delete data     |
-| `POST` | `/api/bins/:id/measurement` | Record per-compartment reading           |
-| `GET`  | `/api/export/excel`         | Multi-sheet data export (IST)            |
+| Method   | Path                        | Description                              |
+| :------- | :-------------------------- | :--------------------------------------- |
+| `GET`    | `/api/auth/me`              | Resolve current user profile             |
+| `GET`    | `/api/health`               | System liveness & connection probe       |
+| `GET`    | `/api/bins`                 | Retrieve all bins & current states       |
+| `GET`    | `/api/bins/:id`             | Single bin details + measurement history |
+| `GET`    | `/api/bins/:id/analytics`   | Daily fill-cycle trend data              |
+| `GET`    | `/api/bins/:id/heatmap`     | 24x7 peak hours matrix                   |
+| `POST`   | `/api/bins`                 | Register a new dustbin (Admin)           |
+| `PATCH`  | `/api/bins/:id`             | Update bin metadata (e.g., location)     |
+| `DELETE` | `/api/bins/:id`             | Remove a bin and cascade delete data     |
+| `POST`   | `/api/bins/:id/measurement` | Record per-compartment reading           |
+| `GET`    | `/api/export/excel`         | Multi-sheet data export (IST)            |
 
 ---
 
@@ -211,14 +211,14 @@ curl http://localhost:3001/api/health
 
 ## 🛠️ Tech Stack & Ecosystem
 
-| Layer         | Standard                                        |
-| :------------ | :---------------------------------------------- |
-| **UI/UX**     | React 18 / Vite / Vanilla CSS (Modern Tokens)   |
-| **Server**    | Node.js (Express) / WebSocket (ws)              |
-| **Auth**      | JWT / Bcrypt (Secure Hashing)                   |
-| **Database**  | Better-SQLite3 (Synchronous performance) / ExcelJS engine    |
-| **Analytics** | Chart.js 4 / 24x7 Custom Heatmap Grid           |
-| **Hardware**  | C++ (Arduino/ESP32)                             |
+| Layer         | Standard                                                  |
+| :------------ | :-------------------------------------------------------- |
+| **UI/UX**     | React 18 / Vite / Vanilla CSS (Modern Tokens)             |
+| **Server**    | Node.js (Express) / WebSocket (ws)                        |
+| **Auth**      | JWT / Bcrypt (Secure Hashing)                             |
+| **Database**  | Better-SQLite3 (Synchronous performance) / ExcelJS engine |
+| **Analytics** | Chart.js 4 / 24x7 Custom Heatmap Grid                     |
+| **Hardware**  | C++ (Arduino/ESP32)                                       |
 
 ---
 

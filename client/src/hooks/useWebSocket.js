@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { WS_URL } from '../utils/constants';
+import { useEffect, useRef, useState } from "react";
+import { WS_URL } from "../utils/constants";
 
 export function useWebSocket({ onMessage, onStatusChange }) {
   const wsRef = useRef(null);
-  const [status, setStatus] = useState('connecting');
+  const [status, setStatus] = useState("connecting");
 
   useEffect(() => {
     onStatusChange?.(status);
@@ -15,11 +15,11 @@ export function useWebSocket({ onMessage, onStatusChange }) {
     const connect = () => {
       const ws = new WebSocket(WS_URL);
       wsRef.current = ws;
-      setStatus('connecting');
+      setStatus("connecting");
 
-      ws.onopen = () => setStatus('connected');
+      ws.onopen = () => setStatus("connected");
       ws.onclose = () => {
-        setStatus('disconnected');
+        setStatus("disconnected");
         reconnectTimer = setTimeout(connect, 3000);
       };
       ws.onerror = () => {};

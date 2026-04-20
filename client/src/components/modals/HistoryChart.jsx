@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 /**
  * Small SVG area chart used inside HistoryModal for per-compartment history.

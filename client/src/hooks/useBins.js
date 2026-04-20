@@ -1,6 +1,6 @@
-import { useState, useCallback, useEffect } from 'react';
-import { API_URL, authHeaders } from '../utils/constants';
-import { useWebSocket } from './useWebSocket';
+import { useState, useCallback, useEffect } from "react";
+import { API_URL, authHeaders } from "../utils/constants";
+import { useWebSocket } from "./useWebSocket";
 
 export function useBins(token) {
   const [bins, setBins] = useState([]);
@@ -40,7 +40,7 @@ export function useBins(token) {
   const handleWebSocketMessage = useCallback((msg) => {
     if (msg.type === "state" || msg.type === "update" || msg.type === "new") {
       setBins((prev) => {
-        const idToFind = msg.type === "new" ? msg.bin.id : (msg.bin?.id);
+        const idToFind = msg.type === "new" ? msg.bin.id : msg.bin?.id;
         const idx = prev.findIndex((b) => b.id === idToFind);
         if (idx >= 0) {
           const next = [...prev];
@@ -54,7 +54,7 @@ export function useBins(token) {
       }
     } else if (msg.type === "delete") {
       setBins((prev) => prev.filter((b) => b.id !== msg.binId));
-      setAnalyticsBinId((prevId) => prevId === msg.binId ? null : prevId);
+      setAnalyticsBinId((prevId) => (prevId === msg.binId ? null : prevId));
     }
   }, []);
 
@@ -86,7 +86,9 @@ export function useBins(token) {
     const json = await res.json();
     if (json.status === "success") {
       setBins((prev) =>
-        prev.map((b) => (b.id === binId ? { ...b, location: json.bin.location } : b))
+        prev.map((b) =>
+          b.id === binId ? { ...b, location: json.bin.location } : b,
+        ),
       );
       return true;
     }

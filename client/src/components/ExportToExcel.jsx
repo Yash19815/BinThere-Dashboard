@@ -12,9 +12,9 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState(null); // 'success', 'error', null
   const [successInfo, setSuccessInfo] = useState(null);
-  
+
   const toYmd = (d) => d.toISOString().slice(0, 10);
-  
+
   const [fromDate, setFromDate] = useState(() =>
     toYmd(new Date(Date.now() - 6 * 86400000)),
   );
@@ -25,7 +25,7 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
     const end = new Date();
     const start = new Date();
     if (days > 0) start.setDate(start.getDate() - days);
-    
+
     setFromDate(toYmd(start));
     setToDate(toYmd(end));
     setFormError(null);
@@ -107,9 +107,15 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
             <span>Presets</span>
           </div>
           <div className="preset-buttons">
-            <button onClick={() => applyPreset(0)} className="preset-btn">Today</button>
-            <button onClick={() => applyPreset(7)} className="preset-btn">Last 7D</button>
-            <button onClick={() => applyPreset(30)} className="preset-btn">Last 30D</button>
+            <button onClick={() => applyPreset(0)} className="preset-btn">
+              Today
+            </button>
+            <button onClick={() => applyPreset(7)} className="preset-btn">
+              Last 7D
+            </button>
+            <button onClick={() => applyPreset(30)} className="preset-btn">
+              Last 30D
+            </button>
           </div>
         </div>
 
@@ -156,14 +162,16 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
           ) : (
             <FileSpreadsheet className="icon" size={18} />
           )}
-          <span>{isExporting ? "Genering..." : exportStatus === "success" ? "Done!" : "Generate Report"}</span>
+          <span>
+            {isExporting
+              ? "Genering..."
+              : exportStatus === "success"
+                ? "Done!"
+                : "Generate Report"}
+          </span>
         </button>
 
-        {successInfo && (
-          <div className="success-feedback">
-            {successInfo}
-          </div>
-        )}
+        {successInfo && <div className="success-feedback">{successInfo}</div>}
 
         {exportStatus === "error" && (
           <div className="error-message">
@@ -354,8 +362,14 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
         }
 
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .spin {
@@ -363,8 +377,12 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
         }
 
         @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
         }
 
         @media (max-width: 768px) {
@@ -373,10 +391,19 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
             align-items: stretch;
             gap: 16px;
           }
-          .divider { display: none; }
-          .date-range { flex-direction: column; align-items: stretch; }
-          .date-arrow { display: none; }
-          .export-button { margin-left: 0; }
+          .divider {
+            display: none;
+          }
+          .date-range {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .date-arrow {
+            display: none;
+          }
+          .export-button {
+            margin-left: 0;
+          }
         }
       `}</style>
     </div>

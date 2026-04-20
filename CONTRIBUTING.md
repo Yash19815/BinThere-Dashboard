@@ -31,12 +31,14 @@ BinThere-Dashboard/
 ### Local Setup
 
 1. **Fork** the repository and clone your fork:
+
    ```bash
    git clone https://github.com/<your-username>/BinThere-Dashboard.git
    cd BinThere-Dashboard
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install          # root dependencies
    cd client && npm install
@@ -58,30 +60,36 @@ BinThere-Dashboard/
 ## 🛠️ Ways to Contribute
 
 ### 🐛 Bug Reports
+
 - Search [existing issues](https://github.com/Yash19815/BinThere-Dashboard/issues) before opening a new one.
 - Include: OS, Node/Python version, steps to reproduce, expected vs. actual behavior, and screenshots/logs if possible.
 
 ### ✨ Feature Requests
+
 - Open an issue with the label `enhancement`.
 - Clearly describe the use case and why it benefits the project.
 
 ### 🔌 ESP32 Firmware
+
 - Keep firmware code in `ESP32_Code/`.
 - Test on actual hardware (ESP32 + HC-SR04 / IR sensors) before submitting.
 - Follow the existing code style and comment sensor pin mappings clearly.
 
 ### 🖥️ Frontend (React)
+
 - All UI code lives in `client/src/`.
 - Use functional components and React hooks.
 - Keep components small and reusable.
 - Follow existing naming conventions (PascalCase for components, camelCase for variables).
 
 ### 🔧 Backend (Node.js)
+
 - API routes go in `server/routes/`, controllers in `server/controllers/`.
 - Validate all incoming data before processing.
 - Avoid committing secrets — use environment variables.
 
 ### 🐍 Python Scripts
+
 - Scripts in `python_scripts/` should be standalone and well-documented.
 - Use `argparse` for CLI arguments where applicable.
 - Prefer `requirements.txt` entries for any new dependencies.
@@ -91,6 +99,7 @@ BinThere-Dashboard/
 ## 🔀 Pull Request Process
 
 1. **Create a branch** from `main`:
+
    ```bash
    git checkout -b feat/your-feature-name
    # or
@@ -98,6 +107,7 @@ BinThere-Dashboard/
    ```
 
 2. **Make your changes**, keeping commits small and descriptive:
+
    ```
    feat: add real-time fill level alerts
    fix: correct HC-SR04 distance calculation
@@ -117,12 +127,12 @@ BinThere-Dashboard/
 
 ## ✅ Code Style Guidelines
 
-| Area | Convention |
-|------|-----------|
-| JavaScript/React | ESLint + Prettier (run `npm run lint`) |
-| Python | PEP 8 (use `black` or `flake8`) |
-| C++ (ESP32) | Google C++ style, 2-space indent |
-| Commits | [Conventional Commits](https://www.conventionalcommits.org/) |
+| Area             | Convention                                                   |
+| ---------------- | ------------------------------------------------------------ |
+| JavaScript/React | ESLint + Prettier (run `npm run lint`)                       |
+| Python           | PEP 8 (use `black` or `flake8`)                              |
+| C++ (ESP32)      | Google C++ style, 2-space indent                             |
+| Commits          | [Conventional Commits](https://www.conventionalcommits.org/) |
 
 ---
 
@@ -141,4 +151,7 @@ By contributing, you agree that your contributions will be licensed under the [M
 ## 🙌 Thank You!
 
 Every contribution, big or small, helps make BinThere better. Whether you're fixing a typo or adding a full new sensor integration — it's appreciated! 💚
+
+```
+
 ```

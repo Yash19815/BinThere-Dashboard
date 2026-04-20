@@ -191,8 +191,16 @@ function requireAuth(req, res, next) {
 ```javascript
 // In exportRoutes.js - using better-sqlite3 (Synchronous)
 const bins = db.prepare("SELECT * FROM bins ORDER BY id").all();
-const measurements = db.prepare("SELECT * FROM measurements WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC").all(startDate, endDate);
-const fillCycles = db.prepare("SELECT * FROM fill_cycles WHERE filled_at >= ? AND filled_at <= ? ORDER BY filled_at DESC").all(startDate, endDate);
+const measurements = db
+  .prepare(
+    "SELECT * FROM measurements WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC",
+  )
+  .all(startDate, endDate);
+const fillCycles = db
+  .prepare(
+    "SELECT * FROM fill_cycles WHERE filled_at >= ? AND filled_at <= ? ORDER BY filled_at DESC",
+  )
+  .all(startDate, endDate);
 ```
 
 **What happens:**

@@ -1,5 +1,5 @@
-import React from 'react';
-import { ALERT_THRESHOLD } from '../../utils/constants';
+import React from "react";
+import { ALERT_THRESHOLD } from "../../utils/constants";
 
 /**
  * Dropdown panel listing bins whose fill level exceeds ALERT_THRESHOLD.

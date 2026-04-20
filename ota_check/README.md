@@ -12,6 +12,7 @@ This directory contains resources for flashing, confirming, and managing Over-Th
 ### Security & Authentication
 
 The `/update` endpoint is protected with HTTP Basic Auth to prevent unauthorized firmware flashes.
+
 - When prompted by the browser, enter the username and password set in the `ESP32_Code/config.h` file.
 - **Default dev credentials are:**
   - Username: `binthere_admin`

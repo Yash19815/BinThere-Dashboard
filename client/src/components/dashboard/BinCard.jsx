@@ -1,7 +1,7 @@
-import React, { memo } from 'react';
-import CompartmentPanel from './CompartmentPanel';
-import { ALERT_THRESHOLD } from '../../utils/constants';
-import { getLevel } from '../../utils/themeUtils';
+import React, { memo } from "react";
+import CompartmentPanel from "./CompartmentPanel";
+import { ALERT_THRESHOLD } from "../../utils/constants";
+import { getLevel } from "../../utils/themeUtils";
 
 function BinCard({
   binId,
@@ -15,7 +15,7 @@ function BinCard({
   wetUpdated,
   onBinClick,
   onEditLocation,
-  onDeleteBin
+  onDeleteBin,
 }) {
   const count = (dryPct !== null ? 1 : 0) + (wetPct !== null ? 1 : 0);
   const avgPct = count > 0 ? ((dryPct ?? 0) + (wetPct ?? 0)) / count : 0;
@@ -23,7 +23,10 @@ function BinCard({
   const isAlert = maxPct >= ALERT_THRESHOLD;
 
   return (
-    <div className={`bin-card ${isAlert ? "bin-alert" : ""}`} onClick={() => onBinClick(binId)}>
+    <div
+      className={`bin-card ${isAlert ? "bin-alert" : ""}`}
+      onClick={() => onBinClick(binId)}
+    >
       <div className="bin-card-header">
         <div className="bin-icon">🗑️</div>
         <div className="bin-meta">
@@ -58,18 +61,18 @@ function BinCard({
       </div>
 
       <div className="compartments-row">
-        <CompartmentPanel 
-          label="🌫 Dry Waste" 
-          pct={dryPct} 
-          rawDistance={dryRawDistance} 
-          lastUpdated={dryUpdated} 
+        <CompartmentPanel
+          label="🌫 Dry Waste"
+          pct={dryPct}
+          rawDistance={dryRawDistance}
+          lastUpdated={dryUpdated}
         />
         <div className="compartment-divider" />
-        <CompartmentPanel 
-          label="💧 Wet Waste" 
-          pct={wetPct} 
-          rawDistance={wetRawDistance} 
-          lastUpdated={wetUpdated} 
+        <CompartmentPanel
+          label="💧 Wet Waste"
+          pct={wetPct}
+          rawDistance={wetRawDistance}
+          lastUpdated={wetUpdated}
         />
       </div>
 

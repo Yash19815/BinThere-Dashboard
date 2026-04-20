@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { API_URL, authHeaders } from '../../utils/constants';
+import React, { useEffect, useState } from "react";
+import { API_URL, authHeaders } from "../../utils/constants";
 
 /**
  * Displays the 24h Bin Utilization Score.
@@ -9,31 +9,43 @@ export default function SummaryStats({ token, refreshKey }) {
 
   useEffect(() => {
     let active = true;
-    fetch(`${API_URL}/api/analytics/utilization`, { headers: authHeaders(token) })
-      .then(res => res.json())
-      .then(data => {
+    fetch(`${API_URL}/api/analytics/utilization`, {
+      headers: authHeaders(token),
+    })
+      .then((res) => res.json())
+      .then((data) => {
         if (active && data.status === "success") {
           setScore(data.utilization_score);
         }
       })
       .catch(() => {});
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, [token, refreshKey]);
 
   let statusColor = "var(--text3)";
   let statusClass = "unknown";
   if (score !== null) {
-    if (score <= 40) { statusColor = "var(--c-low)"; statusClass = "low"; }
-    else if (score <= 70) { statusColor = "var(--c-high)"; statusClass = "high"; }
-    else { statusColor = "var(--c-full)"; statusClass = "full"; }
+    if (score <= 40) {
+      statusColor = "var(--c-low)";
+      statusClass = "low";
+    } else if (score <= 70) {
+      statusColor = "var(--c-high)";
+      statusClass = "high";
+    } else {
+      statusColor = "var(--c-full)";
+      statusClass = "full";
+    }
   }
 
   // Circular progress math
   const radius = 32;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = score !== null 
-    ? circumference - (score / 100) * circumference
-    : circumference;
+  const strokeDashoffset =
+    score !== null
+      ? circumference - (score / 100) * circumference
+      : circumference;
 
   return (
     <div className={`summary-stat-card ${statusClass}`}>
@@ -46,18 +58,17 @@ export default function SummaryStats({ token, refreshKey }) {
       </div>
       <div className="stat-circle-wrap">
         <svg width="84" height="84" className="stat-circle" viewBox="0 0 84 84">
-          <circle 
-            cx="42" cy="42" r={radius} 
-            className="stat-circle-bg" 
-          />
-          <circle 
-            cx="42" cy="42" r={radius} 
+          <circle cx="42" cy="42" r={radius} className="stat-circle-bg" />
+          <circle
+            cx="42"
+            cy="42"
+            r={radius}
             className="stat-circle-fg"
-            style={{ 
+            style={{
               stroke: statusColor,
               strokeDasharray: circumference,
-              strokeDashoffset: strokeDashoffset
-            }} 
+              strokeDashoffset: strokeDashoffset,
+            }}
           />
         </svg>
       </div>

@@ -1,24 +1,24 @@
 # Changelog
 
-| Version | Date       | Type           | Summary                                                                                          |
-| ------- | ---------- | -------------- | ------------------------------------------------------------------------------------------------ |
-| v2.4.1  | 2026-04-20 | ✨ Feature     | Default Bin Seeding: Ensures 1 dustbin exists on first run while supporting dynamic additions     |
-| v2.4.0  | 2026-04-20 | 📊 Export      | Premium Reporting: Executive Summaries, predictive maintenance analytics, and date presets       |
-| v2.3.1  | 2026-04-19 | 📝 Docs       | Updated License from MIT to Apache 2.0
-| v2.3.0  | 2026-04-19 | 🎨 UI          | "Frosted Control Room" glassmorphism overhaul and light theme elimination       |
-| v2.2.0  | 2026-04-19 | 🎨 UI          | Redesigned Utilization Score card, Export to Excel UI, and native dark-mode icon compatibility   |
-| v2.1.0  | 2026-04-19 | ✨ Feature     | Dynamic dustbin management, contributing guidelines, and ESP32 codebase renaming                 |
-| v2.0.0  | 2026-04-17 | 🚀 Update      | Core infrastructure revamp: automated setup scripts, auto-host detection, OTA monitor, licensing |
-| v1.9.0  | 2026-04-15 | 🎨 UI          | Peak-hours heatmaps, dark-mode styling, Refactored Excel export, DB Purge & web OTA UI           |
-| v1.8.0  | 2026-04-13 | 📝 Docs        | Comprehensive BinThere dashboard, server documentation, and v5.5 code context additions          |
-| v1.7.0  | 2026-03-27 | ✨ Feature     | Local Python integration for ML image endpoint testing and serial monitor terminal improvements  |
-| v1.6.0  | 2026-03-25 | 🤖 Hardware    | Hardware Pipeline v5 roll-out (Web UI, NVS, TOF & servo configuration refactoring)               |
-| v1.5.0  | 2026-03-23 | 📊 Export      | Extensive Excel export reporting, UI implementation, and feature documentation set               |
-| v1.4.0  | 2026-03-19 | 🚀 Launch      | Main backend API launch: authentication, real-time WebSocket layers, SQLite data storage         |
-| v1.3.0  | 2026-03-15 | 🔧 Fix         | WebSocket dynamic host routing and Python dependency specification                               |
-| v1.2.0  | 2026-02-24 | 🔒 Auth        | Platform login integration, token delivery, and fill level analytics aggregation                 |
-| v1.1.0  | 2026-02-23 | 📊 Analytics   | Initial real-time chart implementations and local DB schema architecture set                     |
-| v1.0.0  | 2026-02-17 | 🎉 Initialize  | Initial project commit and baseline repository formatting                                        |
+| Version | Date       | Type          | Summary                                                                                          |
+| ------- | ---------- | ------------- | ------------------------------------------------------------------------------------------------ |
+| v2.4.1  | 2026-04-20 | ✨ Feature    | Default Bin Seeding: Ensures 1 dustbin exists on first run while supporting dynamic additions    |
+| v2.4.0  | 2026-04-20 | 📊 Export     | Premium Reporting: Executive Summaries, predictive maintenance analytics, and date presets       |
+| v2.3.1  | 2026-04-19 | 📝 Docs       | Updated License from MIT to Apache 2.0                                                           |
+| v2.3.0  | 2026-04-19 | 🎨 UI         | "Frosted Control Room" glassmorphism overhaul and light theme elimination                        |
+| v2.2.0  | 2026-04-19 | 🎨 UI         | Redesigned Utilization Score card, Export to Excel UI, and native dark-mode icon compatibility   |
+| v2.1.0  | 2026-04-19 | ✨ Feature    | Dynamic dustbin management, contributing guidelines, and ESP32 codebase renaming                 |
+| v2.0.0  | 2026-04-17 | 🚀 Update     | Core infrastructure revamp: automated setup scripts, auto-host detection, OTA monitor, licensing |
+| v1.9.0  | 2026-04-15 | 🎨 UI         | Peak-hours heatmaps, dark-mode styling, Refactored Excel export, DB Purge & web OTA UI           |
+| v1.8.0  | 2026-04-13 | 📝 Docs       | Comprehensive BinThere dashboard, server documentation, and v5.5 code context additions          |
+| v1.7.0  | 2026-03-27 | ✨ Feature    | Local Python integration for ML image endpoint testing and serial monitor terminal improvements  |
+| v1.6.0  | 2026-03-25 | 🤖 Hardware   | Hardware Pipeline v5 roll-out (Web UI, NVS, TOF & servo configuration refactoring)               |
+| v1.5.0  | 2026-03-23 | 📊 Export     | Extensive Excel export reporting, UI implementation, and feature documentation set               |
+| v1.4.0  | 2026-03-19 | 🚀 Launch     | Main backend API launch: authentication, real-time WebSocket layers, SQLite data storage         |
+| v1.3.0  | 2026-03-15 | 🔧 Fix        | WebSocket dynamic host routing and Python dependency specification                               |
+| v1.2.0  | 2026-02-24 | 🔒 Auth       | Platform login integration, token delivery, and fill level analytics aggregation                 |
+| v1.1.0  | 2026-02-23 | 📊 Analytics  | Initial real-time chart implementations and local DB schema architecture set                     |
+| v1.0.0  | 2026-02-17 | 🎉 Initialize | Initial project commit and baseline repository formatting                                        |
 
 All notable changes to the BinThere Dashboard are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
@@ -62,11 +62,13 @@ Transformed the Excel export system into a premium executive reporting tool. Thi
 - **Frontend Persistence**: Export settings now provide visual range confirmation and temporary success/error feedback loops.
 
 ---
- 
+
 ## [v2.3.1] — 2026-04-19
 
 ### Change
+
 Change Usage License from MIT to Apache 2.0
+
 ## [v2.3.0] — 2026-04-19
 
 ### Summary
@@ -134,7 +136,7 @@ Introduced dynamic dustbin management, improved analytics UI controls, and final
 
 ### Summary
 
-A massive developer experience and environment overhaul introducing automated local setups, auto-host resolutions, environmental file fixes, and OTA monitoring. 
+A massive developer experience and environment overhaul introducing automated local setups, auto-host resolutions, environmental file fixes, and OTA monitoring.
 
 ### Added
 
@@ -145,7 +147,7 @@ A massive developer experience and environment overhaul introducing automated lo
 
 ### Changed
 
-- Replaced hard-coded host constraints via dynamic `window.location.hostname` detection resolving API/WS cross-network loading. 
+- Replaced hard-coded host constraints via dynamic `window.location.hostname` detection resolving API/WS cross-network loading.
 - Overhauled root `README.md` to reflect dynamic networking and automatic setup scripts.
 
 ---
@@ -196,7 +198,7 @@ Embedded Python functionality enabling ML image detection and testing pipelines 
 
 ### Changed
 
-- Standardized parameter naming on scripts for explicit cross-parity between testing frameworks and cloud models. 
+- Standardized parameter naming on scripts for explicit cross-parity between testing frameworks and cloud models.
 
 ---
 
@@ -253,7 +255,7 @@ Platform foundation deployment! Backend Node server, auth integrations, and hard
 
 ### Summary
 
-Networking patch improving dynamic WebSocket host configuration across the frontend to support internal routing out of Dev modes. 
+Networking patch improving dynamic WebSocket host configuration across the frontend to support internal routing out of Dev modes.
 
 ### Fixed
 
@@ -275,7 +277,7 @@ Security integrations covering user logins and protected metric routing.
 ### Changed
 
 - Updated Analytics metrics to calculate "Average Fill Level" instead of "Maximum Fill Level".
-- Pushed Auth Tokens forward against the `/api/analytics` fetches locking endpoints. 
+- Pushed Auth Tokens forward against the `/api/analytics` fetches locking endpoints.
 
 ---
 
@@ -292,7 +294,7 @@ Shift from conceptual local hardware to formal web-application charts and statef
 
 ### Changed
 
-- Cleaned `.gitignore` logic blocking active `.db-wal` and sqlite footprints from committing. 
+- Cleaned `.gitignore` logic blocking active `.db-wal` and sqlite footprints from committing.
 
 ---
 

@@ -20,7 +20,7 @@ import { API_URL, authHeaders } from "./utils/constants";
 
 export default function App() {
   const { user, token, logout, loading: authLoading } = useAuth();
-  
+
   const {
     bins,
     loading: binsLoading,
@@ -38,28 +38,34 @@ export default function App() {
   const [history, setHistory] = useState([]);
   const [selectedBinId, setSelectedBinId] = useState(null);
 
-  const openDetail = useCallback(async (binId) => {
-    setSelectedBinId(binId);
-    try {
-      const res = await fetch(`${API_URL}/api/bins/${binId}`, {
-        headers: authHeaders(token),
-      });
-      const json = await res.json();
-      setHistory(json.history || []);
-    } catch {
-      setHistory([]);
-    }
-  }, [token]);
+  const openDetail = useCallback(
+    async (binId) => {
+      setSelectedBinId(binId);
+      try {
+        const res = await fetch(`${API_URL}/api/bins/${binId}`, {
+          headers: authHeaders(token),
+        });
+        const json = await res.json();
+        setHistory(json.history || []);
+      } catch {
+        setHistory([]);
+      }
+    },
+    [token],
+  );
 
-  const handleEditLocation = useCallback(async (binId, currLocation) => {
-    const newLoc = window.prompt(`Update location:`, currLocation);
-    if (!newLoc || newLoc.trim() === "" || newLoc === currLocation) return;
-    try {
-      await updateBinLocation(binId, newLoc.trim());
-    } catch (err) {
-      alert(`Error updating location: ${err.message}`);
-    }
-  }, [updateBinLocation]);
+  const handleEditLocation = useCallback(
+    async (binId, currLocation) => {
+      const newLoc = window.prompt(`Update location:`, currLocation);
+      if (!newLoc || newLoc.trim() === "" || newLoc === currLocation) return;
+      try {
+        await updateBinLocation(binId, newLoc.trim());
+      } catch (err) {
+        alert(`Error updating location: ${err.message}`);
+      }
+    },
+    [updateBinLocation],
+  );
 
   const handleAddBin = useCallback(async () => {
     const name = window.prompt("Enter Dustbin Name:");
@@ -74,15 +80,23 @@ export default function App() {
     }
   }, [addBin]);
 
-  const handleDeleteBin = useCallback(async (binId, binName) => {
-    if (!window.confirm(`Are you sure you want to delete "${binName}"?\nThis will erase ALL its history permanently.`)) return;
+  const handleDeleteBin = useCallback(
+    async (binId, binName) => {
+      if (
+        !window.confirm(
+          `Are you sure you want to delete "${binName}"?\nThis will erase ALL its history permanently.`,
+        )
+      )
+        return;
 
-    try {
-      await deleteBin(binId);
-    } catch (err) {
-      alert(`Error deleting bin: ${err.message}`);
-    }
-  }, [deleteBin]);
+      try {
+        await deleteBin(binId);
+      } catch (err) {
+        alert(`Error deleting bin: ${err.message}`);
+      }
+    },
+    [deleteBin],
+  );
 
   // Show nothing while checking auth session
   if (authLoading) {
@@ -98,16 +112,11 @@ export default function App() {
     return <LoginPage />;
   }
 
-  const selectedBin = bins.find(b => b.id === selectedBinId);
+  const selectedBin = bins.find((b) => b.id === selectedBinId);
 
   return (
     <div className="app">
-      <Header
-        bins={bins}
-        wsStatus={wsStatus}
-        user={user}
-        onLogout={logout}
-      />
+      <Header bins={bins} wsStatus={wsStatus} user={user} onLogout={logout} />
 
       <main className="main">
         <div className="page-title-row">
@@ -122,7 +131,11 @@ export default function App() {
               ➕ Add Dustbin
             </button>
             <ExportToExcel />
-            <button className="refresh-btn" onClick={refreshBins} title="Refresh">
+            <button
+              className="refresh-btn"
+              onClick={refreshBins}
+              title="Refresh"
+            >
               ↻ Refresh
             </button>
           </div>
@@ -146,7 +159,9 @@ export default function App() {
             title="No Bins Found"
             description="Waiting for sensor data. Make sure the backend is running and the ESP32 is sending data."
           >
-            <button className="add-bin-btn" onClick={handleAddBin}>➕ Add Dustbin</button>
+            <button className="add-bin-btn" onClick={handleAddBin}>
+              ➕ Add Dustbin
+            </button>
           </EmptyState>
         ) : (
           <>
@@ -178,10 +193,7 @@ export default function App() {
                   refreshKey={analyticsKey}
                   token={token}
                 />
-                <PeakHoursHeatmap
-                  binId={analyticsBinId}
-                  token={token}
-                />
+                <PeakHoursHeatmap binId={analyticsBinId} token={token} />
               </>
             )}
 
