@@ -2,7 +2,7 @@
 
 | Version | Date       | Type          | Summary                                                                                          |
 | ------- | ---------- | ------------- | ------------------------------------------------------------------------------------------------ |
-| v2.4.2  | 2026-04-21 | 📝 Docs       | Documentation Overhaul: Modernized CONTRIBUTING.md with automated setup and UI tokens             |
+| v2.4.2  | 2026-04-21 | 📝 Docs       | Documentation Overhaul: Modernized CONTRIBUTING.md with automated setup and UI tokens            |
 | v2.4.1  | 2026-04-20 | ✨ Feature    | Default Bin Seeding: Ensures 1 dustbin exists on first run while supporting dynamic additions    |
 | v2.4.0  | 2026-04-20 | 📊 Export     | Premium Reporting: Executive Summaries, predictive maintenance analytics, and date presets       |
 | v2.3.1  | 2026-04-19 | 📝 Docs       | Updated License from MIT to Apache 2.0                                                           |

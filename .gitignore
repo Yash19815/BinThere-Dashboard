@@ -60,3 +60,8 @@ brain/
 graphify-out/
 .graphify_*
 scratch/
+
+# -- Local Documentation (Excluded from Git) -------------------
+BinThere_Code_Explained.md
+BinThere_Dashboard_Code_Explained.md
+

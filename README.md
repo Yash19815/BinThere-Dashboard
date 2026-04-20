@@ -224,9 +224,9 @@ curl http://localhost:3001/api/health
 
 ## 📚 Related Documentation
 
-- 📄 **[BinThere Code Explained](./BinThere_Code_Explained.md)**: Deep dive into the React components & UI logic.
-- 📄 **[Dashboard Design](./BinThere_Dashboard_Code_Explained.md)**: Backend architecture and API design patterns.
 - 📄 **[Export System](./EXPORT_FEATURE_GUIDE.md)**: Detailed guide for IST-localized Excel reporting.
+- 📄 **[Contributing Guidelines](./CONTRIBUTING.md)**: Standards for adding features and maintaining code quality.
+
 
 ---
 
