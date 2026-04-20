@@ -38,8 +38,8 @@ BinThere is a high-fidelity, real-time monitoring ecosystem designed for smart w
 
 ### 📤 Data Portability
 
-- **Excel Intelligence**: High-fidelity reports with IST timestamping and recursive data sheets (Bins, Measurements, Cycles, Summary).
-- **Date-Range Filtering**: Export specific temporal windows for compliance and reporting.
+- **Excel Intelligence**: Premium executive reports with IST timestamping, KPI summaries, predictive maintenance forecasting, and recursive data tracking.
+- **Date-Range Filtering**: Export specific temporal windows using one-tap presets (Today, 7D, 30D) or custom date pickers.
 
 ---
 
@@ -216,7 +216,7 @@ curl http://localhost:3001/api/health
 | **UI/UX**     | React 18 / Vite / Vanilla CSS (Modern Tokens)   |
 | **Server**    | Node.js (Express) / WebSocket (ws)              |
 | **Auth**      | JWT / Bcrypt (Secure Hashing)                   |
-| **Database**  | Better-SQLite3 (High-performance native driver) |
+| **Database**  | Better-SQLite3 (Synchronous performance) / ExcelJS engine    |
 | **Analytics** | Chart.js 4 / 24x7 Custom Heatmap Grid           |
 | **Hardware**  | C++ (Arduino/ESP32)                             |
 

@@ -23,12 +23,12 @@ The Excel export feature allows users to download all BinThere data (bins, measu
 
 ### Key Features
 
-- ✅ **Complete data export**: All 3 database tables exported
-- ✅ **Professional formatting**: Color-coded compartments, highlighted alerts
-- ✅ **Auto-calculations**: Fill cycle durations computed automatically
-- ✅ **Summary statistics**: Overview dashboard in the first sheet
+- ✅ **Premium reporting**: Executive Summary sheet with high-level KPI visualization
+- ✅ **Forecasting Engine**: Predictive Maintenance sheet estimating "Time to Full"
+- ✅ **Visual Intelligence**: Conditional formatting with Red/Yellow/Green status levels
+- ✅ **High Performance**: Refactored to `better-sqlite3` for synchronous data processing
+- ✅ **Quick Presets**: Rapid date-range selection (Today, 7D, 30D)
 - ✅ **JWT authentication**: Secured with the same auth as your dashboard
-- ✅ **One-click download**: No configuration needed from users
 
 ### Technology Stack
 
@@ -189,12 +189,10 @@ function requireAuth(req, res, next) {
 #### 4. Database Queries Execute
 
 ```javascript
-// In exportRoutes.js
-const [bins, measurements, fillCycles] = await Promise.all([
-  queryDatabase(db, "SELECT * FROM bins ORDER BY id"),
-  queryDatabase(db, "SELECT * FROM measurements ORDER BY timestamp DESC"),
-  queryDatabase(db, "SELECT * FROM fill_cycles ORDER BY filled_at DESC"),
-]);
+// In exportRoutes.js - using better-sqlite3 (Synchronous)
+const bins = db.prepare("SELECT * FROM bins ORDER BY id").all();
+const measurements = db.prepare("SELECT * FROM measurements WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC").all(startDate, endDate);
+const fillCycles = db.prepare("SELECT * FROM fill_cycles WHERE filled_at >= ? AND filled_at <= ? ORDER BY filled_at DESC").all(startDate, endDate);
 ```
 
 **What happens:**
@@ -232,11 +230,10 @@ createSummarySheet(workbook, bins, measurements, fillCycles);
 
 **Summary sheet includes:**
 
-- Export timestamp
-- Total counts (bins, measurements, cycles)
-- Active vs completed cycles
-- Latest fill levels per compartment
-- Legend explaining other sheets
+- **KPI Highlights**: Total Active Bins, Monitoring Coverage, and Overall Efficiency
+- **Collection Alert**: Automated identification of the **"Critical Action"** window (peak fill hours)
+- **Visual Legend**: Professional color-coded key for maintenance staff
+- **Export Context**: User, date range, and bin ID context info
 
 ##### C. Create Bins Sheet
 

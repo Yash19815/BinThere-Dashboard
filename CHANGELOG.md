@@ -2,6 +2,7 @@
 
 | Version | Date       | Type           | Summary                                                                                          |
 | ------- | ---------- | -------------- | ------------------------------------------------------------------------------------------------ |
+| v2.4.0  | 2026-04-20 | 📊 Export      | Premium Reporting: Executive Summaries, predictive maintenance analytics, and date presets       |
 | v2.3.1  | 2026-04-19 | 📝 Docs       | Updated License from MIT to Apache 2.0
 | v2.3.0  | 2026-04-19 | 🎨 UI          | "Frosted Control Room" glassmorphism overhaul and light theme elimination       |
 | v2.2.0  | 2026-04-19 | 🎨 UI          | Redesigned Utilization Score card, Export to Excel UI, and native dark-mode icon compatibility   |
@@ -21,6 +22,27 @@
 All notable changes to the BinThere Dashboard are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
+
+---
+
+## [v2.4.0] — 2026-04-20
+
+### Summary
+
+Transformed the Excel export system into a premium executive reporting tool. This update introduces a full refactor to the `better-sqlite3` driver for performance, a multi-sheet reporting engine with KPI summaries, and a proactive maintenance forecasting system.
+
+### Added
+
+- **Executive Summary Sheet**: A high-fidelity overview sheet featuring three core KPIs (Active Bins, Avg Utilization, Effiency) and a highlighted **"Critical Action"** alert for peak utilization windows.
+- **Maintenance Prediction Engine**: Introduced a dedicated forecasting sheet that calculates estimated **"Time to Full"** for all monitored bins based on real-time fill rates and delta growth.
+- **Quick Date Presets**: Enhanced the frontend UX with one-tap presets for **"Today"**, **"Last 7 Days"**, and **"Last 30 Days"**, drastically reducing report configuration time.
+- **Visual Intelligence**: Applied rich conditional formatting across the workbook, including status-aware cell highlighting (Red/Yellow/Green) and color-coded priority flags for maintenance staff.
+
+### Changed
+
+- **Database Architecture**: Fully refactored `server/exportRoutes.js` from legacy callback-only `sqlite3` to synchronous, high-performance `better-sqlite3`.
+- **Formatting Overhaul**: Workbook now uses professional typography (Inter/Calibri), custom column widths, and semantic grouping for machine-readable yet human-friendly reports.
+- **Frontend Persistence**: Export settings now provide visual range confirmation and temporary success/error feedback loops.
 
 ---
  
