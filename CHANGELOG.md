@@ -2,6 +2,7 @@
 
 | Version | Date       | Type          | Summary                                                                                          |
 | ------- | ---------- | ------------- | ------------------------------------------------------------------------------------------------ |
+| v2.4.3  | 2026-04-21 | 🎨 UI         | Premium Dialogs: Replaced browser alerts/prompts with a "Frosted Control Room" glassmorphic modal |
 | v2.4.2  | 2026-04-21 | 📝 Docs       | Documentation Overhaul: Modernized CONTRIBUTING.md with automated setup and UI tokens            |
 | v2.4.1  | 2026-04-20 | ✨ Feature    | Default Bin Seeding: Ensures 1 dustbin exists on first run while supporting dynamic additions    |
 | v2.4.0  | 2026-04-20 | 📊 Export     | Premium Reporting: Executive Summaries, predictive maintenance analytics, and date presets       |
@@ -24,6 +25,24 @@
 All notable changes to the BinThere Dashboard are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
+
+---
+
+## [v2.4.3] — 2026-04-21
+
+### Summary
+
+Successfully eliminated all legacy browser interaction popups (`window.prompt`, `window.alert`) in favor of a high-fidelity, custom-built modal system. This update solidifies the **"Frosted Control Room"** aesthetic by introducing kinetic glassmorphic dialogs for all administrative actions.
+
+### Added
+
+- **Kinetic Prompt Modal**: A reusable, multi-field modal component supporting "Spring" (elastic) entry transitions and deep backdrop blurs (20px).
+- **Industrial Form Controls**: High-contrast glass inputs featuring gradient-aware focus states and semantic validation feedback.
+
+### Changed
+
+- **Unified Add-Bin Workflow**: Replaced sequential browser prompts for "Name" and "Location" with a single, professional two-field form modal.
+- **Glassmorphic Standardization**: Applied rigorous glass tokens across all system overlays, ensuring consistent depth and translucency across the entire dashboard.
 
 ---
 

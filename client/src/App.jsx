@@ -10,6 +10,7 @@ import AnalyticsSection from "./components/dashboard/AnalyticsSection";
 import PeakHoursHeatmap from "./components/dashboard/PeakHoursHeatmap";
 import BinCard from "./components/dashboard/BinCard";
 import HistoryModal from "./components/modals/HistoryModal";
+import PromptModal from "./components/modals/PromptModal";
 
 import EmptyState from "./components/ui/EmptyState";
 import InlineError from "./components/ui/InlineError";
@@ -37,6 +38,15 @@ export default function App() {
 
   const [history, setHistory] = useState([]);
   const [selectedBinId, setSelectedBinId] = useState(null);
+  const [promptConfig, setPromptConfig] = useState({
+    isOpen: false,
+    title: "",
+    fields: [],
+    onSubmit: () => {},
+  });
+
+  const closePrompt = () =>
+    setPromptConfig((prev) => ({ ...prev, isOpen: false }));
 
   const openDetail = useCallback(
     async (binId) => {
@@ -56,28 +66,55 @@ export default function App() {
 
   const handleEditLocation = useCallback(
     async (binId, currLocation) => {
-      const newLoc = window.prompt(`Update location:`, currLocation);
-      if (!newLoc || newLoc.trim() === "" || newLoc === currLocation) return;
-      try {
-        await updateBinLocation(binId, newLoc.trim());
-      } catch (err) {
-        alert(`Error updating location: ${err.message}`);
-      }
+      setPromptConfig({
+        isOpen: true,
+        title: "Update Bin Location",
+        fields: [
+          {
+            name: "location",
+            label: "Specific Location",
+            initialValue: currLocation,
+            placeholder: "e.g. Lobby, 2nd Floor South",
+          },
+        ],
+        onSubmit: async (values) => {
+          const newLoc = values.location.trim();
+          if (!newLoc || newLoc === currLocation) return;
+          try {
+            await updateBinLocation(binId, newLoc);
+          } catch (err) {
+            alert(`Error updating location: ${err.message}`);
+          }
+        },
+      });
     },
     [updateBinLocation],
   );
 
   const handleAddBin = useCallback(async () => {
-    const name = window.prompt("Enter Dustbin Name:");
-    if (!name) return;
-    const location = window.prompt("Enter Location:");
-    if (!location) return;
-
-    try {
-      await addBin(name.trim(), location.trim());
-    } catch (err) {
-      alert(`Error creating bin: ${err.message}`);
-    }
+    setPromptConfig({
+      isOpen: true,
+      title: "Add New Smart Dustbin",
+      fields: [
+        {
+          name: "name",
+          label: "Dustbin Name",
+          placeholder: "e.g. SmartBin-CX-01",
+        },
+        {
+          name: "location",
+          label: "Physical Location",
+          placeholder: "e.g. Main Entrance",
+        },
+      ],
+      onSubmit: async (values) => {
+        try {
+          await addBin(values.name.trim(), values.location.trim());
+        } catch (err) {
+          alert(`Error creating bin: ${err.message}`);
+        }
+      },
+    });
   }, [addBin]);
 
   const handleDeleteBin = useCallback(
@@ -230,6 +267,14 @@ export default function App() {
           }}
         />
       )}
+
+      <PromptModal
+        isOpen={promptConfig.isOpen}
+        title={promptConfig.title}
+        fields={promptConfig.fields}
+        onSubmit={promptConfig.onSubmit}
+        onClose={closePrompt}
+      />
     </div>
   );
 }

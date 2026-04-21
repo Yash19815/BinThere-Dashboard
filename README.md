@@ -20,7 +20,7 @@ BinThere is a high-fidelity, real-time monitoring ecosystem designed for smart w
 - **Dual-Compartment Visualization**: Individual vertical fill gauges for Dry and Wet waste categories.
 - **Dynamic Status Indicators**: Intelligent color-coding (Green → Yellow → Orange → Red) based on real-time fill density.
 - **Notification Engine**: Integrated alert system (visual badge + toast notifications) for compartments exceeding 80% capacity.
-- **Dynamic Bin Management**: Add, edit, or delete dustbins directly from the dashboard UI with instant WebSocket propagation.
+- **Dynamic Bin Management**: Add, edit, or delete dustbins via high-fidelity glassmorphic modals with instant WebSocket propagation.
 
 ### 📊 Advanced Analytics
 
