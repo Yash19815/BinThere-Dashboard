@@ -8,7 +8,6 @@
 | v2.5.1  | 2026-04-23 | 🪄 Magic      | High-Fidelity Visual Refinement: 3D glass cylinders, kinetic shimmer, and status-aware glow auras |
 | v2.5.0  | 2026-04-23 | 🎨 UI         | Frosted Control Room: Redesigned dashboard hero, industrial bin cards, and sidebar export tool |
 | v2.4.4  | 2026-04-23 | 🚀 Update     | Sequential Startup & Advanced Logging: Backend-first initialization and comprehensive event logs  |
-
 | v2.4.3  | 2026-04-21 | 🎨 UI         | Premium Dialogs: Replaced browser alerts/prompts with a "Frosted Control Room" glassmorphic modal |
 | v2.4.2  | 2026-04-21 | 📝 Docs       | Documentation Overhaul: Modernized CONTRIBUTING.md with automated setup and UI tokens             |
 | v2.4.1  | 2026-04-20 | ✨ Feature    | Default Bin Seeding: Ensures 1 dustbin exists on first run while supporting dynamic additions     |
@@ -54,10 +53,10 @@ Emergency patch to resolve Excel reporting connectivity and finalize industrial 
 ### Hardware
 - **Sensor Calibration**: Verified the **25cm** bin height mapping where 2cm = Empty (8%) and 25cm = Full (100%), matching bottom-mount logic.
 
+---
+
 ## [v2.6.0] — 2026-04-23
-
 ### Summary
-
 Inverted the core sensor logic to align with specific hardware mounting configurations where a smaller distance measurement indicates an empty container. Additionally, restored the intuitive Traffic Light (Green-Yellow-Red) visual system and significantly increased the vertical scale of the compartment monitoring cards for better legibility.
 
 ### Added
