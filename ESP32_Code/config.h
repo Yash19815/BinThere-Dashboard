@@ -7,11 +7,11 @@
 // ============================================================
 
 // ── WiFi ─────────────────────────────────────────────────────
-#define WIFI_SSID "Airtel_vamika_2024"
-#define WIFI_PASSWORD "vamika_2024"
+#define WIFI_SSID "iPhone"
+#define WIFI_PASSWORD "123456789"
 
 // ── Dashboard Server ─────────────────────────────────────────
-#define SERVER_IP "192.168.1.8"
+#define SERVER_IP "172.20.10.2"
 #define SERVER_PORT 3001
 #define DEVICE_API_KEY "binthere-esp32-device-key-2026"
 
@@ -81,7 +81,3 @@
 #define WS_PATH "/ws"
 #define WS_MAX_CLIENTS 4
 #define WS_LOG_LINE_CAP 600
-
-// ── OTA Firmware Update ──────────────────────────────────────
-#define OTA_USERNAME "binthere_admin"
-#define OTA_PASSWORD "change_me_before_use" // User should change this!

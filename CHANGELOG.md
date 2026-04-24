@@ -1,76 +1,110 @@
 # Changelog
 
-| Version | Date       | Type          | Summary                                                                                           |
-| ------- | ---------- | ------------- | ------------------------------------------------------------------------------------------------- |
-| v2.8.0  | 2026-04-24 | 🎨 UI         | Enhanced dropdown opacity and implemented click-outside-to-close behavior for Header navigation    |
+| Version | Date       | Type           | Summary                                                                                           |
+| ------- | ---------- | -------------- | ------------------------------------------------------------------------------------------------- |
+| v2.9.0  | 2026-04-24 | ⚡ Performance | Backend bottleneck elimination: async auth, DB indexing, fleet caching, and batched purge         |
+| v2.8.0  | 2026-04-24 | 🎨 UI          | Enhanced dropdown opacity and implemented click-outside-to-close behavior for Header navigation   |
 | v2.7.0  | 2026-04-23 | 🔧 Fix         | Resolved Export API 404 and expanded UI visuals                                                   |
-| v2.6.0  | 2026-04-23 | 🔧 Fix         | Logic Inversion: Small distance now maps to Empty; Restored Traffic Light (G/Y/R) visuals          |
-| v2.5.2  | 2026-04-23 | 🎨 UI         | Color Refinement: Restored waste-type identity (Blue/Green) with status-aware alert transitions    |
-| v2.5.1  | 2026-04-23 | 🪄 Magic      | High-Fidelity Visual Refinement: 3D glass cylinders, kinetic shimmer, and status-aware glow auras |
-| v2.5.0  | 2026-04-23 | 🎨 UI         | Frosted Control Room: Redesigned dashboard hero, industrial bin cards, and sidebar export tool |
-| v2.4.4  | 2026-04-23 | 🚀 Update     | Sequential Startup & Advanced Logging: Backend-first initialization and comprehensive event logs  |
-| v2.4.3  | 2026-04-21 | 🎨 UI         | Premium Dialogs: Replaced browser alerts/prompts with a "Frosted Control Room" glassmorphic modal |
-| v2.4.2  | 2026-04-21 | 📝 Docs       | Documentation Overhaul: Modernized CONTRIBUTING.md with automated setup and UI tokens             |
-| v2.4.1  | 2026-04-20 | ✨ Feature    | Default Bin Seeding: Ensures 1 dustbin exists on first run while supporting dynamic additions     |
-| v2.4.0  | 2026-04-20 | 📊 Export     | Premium Reporting: Executive Summaries, predictive maintenance analytics, and date presets        |
-| v2.3.1  | 2026-04-19 | 📝 Docs       | Updated License from MIT to Apache 2.0                                                            |
-| v2.3.0  | 2026-04-19 | 🎨 UI         | "Frosted Control Room" glassmorphism overhaul and light theme elimination                         |
-| v2.2.0  | 2026-04-19 | 🎨 UI         | Redesigned Utilization Score card, Export to Excel UI, and native dark-mode icon compatibility    |
-| v2.1.0  | 2026-04-19 | ✨ Feature    | Dynamic dustbin management, contributing guidelines, and ESP32 codebase renaming                  |
-| v2.0.0  | 2026-04-17 | 🚀 Update     | Core infrastructure revamp: automated setup scripts, auto-host detection, OTA monitor, licensing  |
-| v1.9.0  | 2026-04-15 | 🎨 UI         | Peak-hours heatmaps, dark-mode styling, Refactored Excel export, DB Purge & web OTA UI            |
-| v1.8.0  | 2026-04-13 | 📝 Docs       | Comprehensive BinThere dashboard, server documentation, and v5.5 code context additions           |
-| v1.7.0  | 2026-03-27 | ✨ Feature    | Local Python integration for ML image endpoint testing and serial monitor terminal improvements   |
-| v1.6.0  | 2026-03-25 | 🤖 Hardware   | Hardware Pipeline v5 roll-out (Web UI, NVS, TOF & servo configuration refactoring)                |
-| v1.5.0  | 2026-03-23 | 📊 Export     | Extensive Excel export reporting, UI implementation, and feature documentation set                |
-| v1.4.0  | 2026-03-19 | 🚀 Launch     | Main backend API launch: authentication, real-time WebSocket layers, SQLite data storage          |
-| v1.3.0  | 2026-03-15 | 🔧 Fix        | WebSocket dynamic host routing and Python dependency specification                                |
-| v1.2.0  | 2026-02-24 | 🔒 Auth       | Platform login integration, token delivery, and fill level analytics aggregation                  |
-| v1.1.0  | 2026-02-23 | 📊 Analytics  | Initial real-time chart implementations and local DB schema architecture set                      |
-| v1.0.0  | 2026-02-17 | 🎉 Initialize | Initial project commit and baseline repository formatting                                         |
+| v2.6.0  | 2026-04-23 | 🔧 Fix         | Logic Inversion: Small distance now maps to Empty; Restored Traffic Light (G/Y/R) visuals         |
+| v2.5.2  | 2026-04-23 | 🎨 UI          | Color Refinement: Restored waste-type identity (Blue/Green) with status-aware alert transitions   |
+| v2.5.1  | 2026-04-23 | 🪄 Magic       | High-Fidelity Visual Refinement: 3D glass cylinders, kinetic shimmer, and status-aware glow auras |
+| v2.5.0  | 2026-04-23 | 🎨 UI          | Frosted Control Room: Redesigned dashboard hero, industrial bin cards, and sidebar export tool    |
+| v2.4.4  | 2026-04-23 | 🚀 Update      | Sequential Startup & Advanced Logging: Backend-first initialization and comprehensive event logs  |
+| v2.4.3  | 2026-04-21 | 🎨 UI          | Premium Dialogs: Replaced browser alerts/prompts with a "Frosted Control Room" glassmorphic modal |
+| v2.4.2  | 2026-04-21 | 📝 Docs        | Documentation Overhaul: Modernized CONTRIBUTING.md with automated setup and UI tokens             |
+| v2.4.1  | 2026-04-20 | ✨ Feature     | Default Bin Seeding: Ensures 1 dustbin exists on first run while supporting dynamic additions     |
+| v2.4.0  | 2026-04-20 | 📊 Export      | Premium Reporting: Executive Summaries, predictive maintenance analytics, and date presets        |
+| v2.3.1  | 2026-04-19 | 📝 Docs        | Updated License from MIT to Apache 2.0                                                            |
+| v2.3.0  | 2026-04-19 | 🎨 UI          | "Frosted Control Room" glassmorphism overhaul and light theme elimination                         |
+| v2.2.0  | 2026-04-19 | 🎨 UI          | Redesigned Utilization Score card, Export to Excel UI, and native dark-mode icon compatibility    |
+| v2.1.0  | 2026-04-19 | ✨ Feature     | Dynamic dustbin management, contributing guidelines, and ESP32 codebase renaming                  |
+| v2.0.0  | 2026-04-17 | 🚀 Update      | Core infrastructure revamp: automated setup scripts, auto-host detection, OTA monitor, licensing  |
+| v1.9.0  | 2026-04-15 | 🎨 UI          | Peak-hours heatmaps, dark-mode styling, Refactored Excel export, DB Purge & web OTA UI            |
+| v1.8.0  | 2026-04-13 | 📝 Docs        | Comprehensive BinThere dashboard, server documentation, and v5.5 code context additions           |
+| v1.7.0  | 2026-03-27 | ✨ Feature     | Local Python integration for ML image endpoint testing and serial monitor terminal improvements   |
+| v1.6.0  | 2026-03-25 | 🤖 Hardware    | Hardware Pipeline v5 roll-out (Web UI, NVS, TOF & servo configuration refactoring)                |
+| v1.5.0  | 2026-03-23 | 📊 Export      | Extensive Excel export reporting, UI implementation, and feature documentation set                |
+| v1.4.0  | 2026-03-19 | 🚀 Launch      | Main backend API launch: authentication, real-time WebSocket layers, SQLite data storage          |
+| v1.3.0  | 2026-03-15 | 🔧 Fix         | WebSocket dynamic host routing and Python dependency specification                                |
+| v1.2.0  | 2026-02-24 | 🔒 Auth        | Platform login integration, token delivery, and fill level analytics aggregation                  |
+| v1.1.0  | 2026-02-23 | 📊 Analytics   | Initial real-time chart implementations and local DB schema architecture set                      |
+| v1.0.0  | 2026-02-17 | 🎉 Initialize  | Initial project commit and baseline repository formatting                                         |
 
 All notable changes to the BinThere Dashboard are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+---
+
+## [v2.9.0] — 2026-04-24
+
+### Summary
+
+Comprehensive backend performance audit and optimization pass. Eliminated four critical event-loop blocking bottlenecks in `server/server.js` that would cause the server to freeze under load or at scale.
+
+### Changed
+
+- **Async Cryptography**: Converted `bcrypt.hashSync` and `bcrypt.compareSync` in `/api/auth/login` and `/api/auth/register` to their async counterparts (`bcrypt.hash`, `bcrypt.compare`), preventing ~100ms event-loop stalls per authentication request.
+- **Batched Data Purge**: Refactored `purgeOldData()` from a single blocking transaction into an incremental batch-delete loop (500 rows per tick with `setTimeout` yielding), ensuring real-time WebSocket and API responsiveness during nightly maintenance.
+
+### Added
+
+- **Database Performance Indexes**: Created four composite indexes on `measurements` and `fill_cycles` tables (`idx_measurements_bin_comp_ts`, `idx_measurements_timestamp`, `idx_fill_cycles_bin_comp`, `idx_fill_cycles_filled_at`) to eliminate full table scans on high-frequency aggregation queries.
+- **Fleet State Cache**: Introduced an in-memory `fleetCache` with `rebuildFleetCache()` and `patchFleetCache()` functions. The `/api/bins` endpoint and WebSocket connection handler now serve cached state instantly instead of running heavy `GROUP BY` queries. The cache is invalidated incrementally on measurements and fully rebuilt on structural mutations (add/delete/edit bin).
+
+### Fixed
+
+- **Cache Eviction on Delete**: `fillStateCache` entries are now explicitly cleaned up when a bin is deleted, preventing stale state leaks in long-running processes.
 
 ---
 
 ## [v2.8.0] — 2026-04-24
+
 ### Summary
+
 Improved the usability and visual clarity of the header navigation by increasing the opacity of dropdown panels and implementing a smarter "click-outside" closure logic for the notification and profile menus.
 
 ### Changed
+
 - **Dropdown Opacity**: Switched `.notif-dropdown` and `.profile-dropdown` to a **fully opaque** solid background (`var(--surface-solid)`) and removed all glassmorphism/backdrop-filter effects to maximize readability.
 - **Auto-Close Logic**: Implemented a global document click listener in `Header.jsx` that automatically closes open dropdowns when a user clicks anywhere outside the menu boundaries.
 
 ### Added
+
 - **Ref-Based Interaction**: Integrated `useRef` and `useEffect` hooks in the `Header` component to track dropdown boundaries and manage stateful menu transitions more reliably.
 
 ---
 
 ## [v2.7.0] — 2026-04-23
+
 ### Summary
+
 Emergency patch to resolve Excel reporting connectivity and finalize industrial UI proportions, including a major redesign of the fleet analytics visualization.
 
 ### Fixed
+
 - **Export API Connectivity**: Fixed `404 Not Found` error on Excel report generation by correcting the `apiBaseUrl` routing in `App.jsx`.
 - **UI Proportions**: Increased `CompartmentPanel` fill-tube height to **160px** (from 110px) to enhance operational legibility and satisfy "industrial scale" requirements.
 - **Chart Overshoot Clamping**: Fixed an issue where the smooth curve would "dip" into negative values when approaching 0% by clamping Bezier control points to the chart floor.
 
 ### Changed
+
 - **Chart Card Layout**: Redesigned the `FleetUtilizationChart` to use a "fill-card" layout where the trend line occupies the full card width, with the circular KPI repositioned as a compact overlay in the top-right corner.
 
 ### Added
+
 - **Visual Curve Refinement**: Upgraded `FleetUtilizationChart` with a cubic Bezier smoothing algorithm, replacing the polygonal line with a smooth, fluid trend line.
 
 ### Hardware
+
 - **Sensor Calibration**: Verified the **25cm** bin height mapping where 2cm = Empty (8%) and 25cm = Full (100%), matching bottom-mount logic.
 
 ---
 
 ## [v2.6.0] — 2026-04-23
+
 ### Summary
+
 Inverted the core sensor logic to align with specific hardware mounting configurations where a smaller distance measurement indicates an empty container. Additionally, restored the intuitive Traffic Light (Green-Yellow-Red) visual system and significantly increased the vertical scale of the compartment monitoring cards for better legibility.
 
 ### Added
@@ -149,7 +183,6 @@ Successfully transitioned the platform to a premium "Frosted Control Room" aesth
 ---
 
 ## [v2.4.4] — 2026-04-23
-
 
 ### Summary
 
