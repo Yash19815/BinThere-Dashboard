@@ -32,22 +32,22 @@ export default function FleetUtilizationChart({ token, refreshKey }) {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    // Fetch score and history independently so one failure doesn't block the other
     try {
-      const [scoreRes, historyRes] = await Promise.all([
-        fetch(`${API_URL}/api/analytics/utilization`, { headers: authHeaders(token) }),
-        fetch(`${API_URL}/api/analytics/fleet-history`, { headers: authHeaders(token) })
-      ]);
-      
+      const scoreRes = await fetch(`${API_URL}/api/analytics/utilization`, { headers: authHeaders(token) });
       const scoreJson = await scoreRes.json();
-      const historyJson = await historyRes.json();
-
       if (scoreJson.status === "success") setScore(scoreJson.utilization_score);
+    } catch (err) {
+      console.error("Failed to fetch utilization score:", err);
+    }
+    try {
+      const historyRes = await fetch(`${API_URL}/api/analytics/fleet-history`, { headers: authHeaders(token) });
+      const historyJson = await historyRes.json();
       if (historyJson.status === "success") setHistory(historyJson);
     } catch (err) {
-      console.error("Failed to fetch fleet analytics:", err);
-    } finally {
-      setLoading(false);
+      console.error("Failed to fetch fleet history:", err);
     }
+    setLoading(false);
   }, [token, refreshKey]);
 
   useEffect(() => {

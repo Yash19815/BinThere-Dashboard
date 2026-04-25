@@ -206,7 +206,9 @@ function recordFillCycle(binId, compartment, fillLevel, timestamp) {
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function computeFillLevel(rawDistanceCm, maxHeightCm) {
-  const fill = (rawDistanceCm / maxHeightCm) * 100;
+  // Small distance = bin is full (sensor at top, waste near sensor)
+  // Large distance = bin is empty (sensor sees the bottom)
+  const fill = ((maxHeightCm - rawDistanceCm) / maxHeightCm) * 100;
   return Math.min(100, Math.max(0, parseFloat(fill.toFixed(2))));
 }
 
@@ -465,6 +467,34 @@ app.get("/api/analytics/utilization", requireAuth, (req, res) => {
   res.json({ status: "success", utilization_score: row?.avgFill != null ? Math.round(row.avgFill) : 0 });
 });
 
+/**
+ * GET /api/analytics/fleet-history
+ * Returns 7-day daily average fill levels across all bins for the Fleet Utilization chart.
+ */
+app.get("/api/analytics/fleet-history", requireAuth, (req, res) => {
+  const days = 7;
+  const allDays = Array.from({ length: days }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (days - 1 - i)); return d.toISOString().slice(0, 10);
+  });
+
+  const rows = db.prepare(`
+    SELECT date(timestamp) AS day, AVG(fill_level_percent) AS avgFill
+    FROM measurements
+    WHERE timestamp >= datetime('now', ? || ' days')
+    GROUP BY day
+    ORDER BY day
+  `).all(`-${days}`);
+
+  const dayMap = {};
+  rows.forEach(r => { dayMap[r.day] = Math.round(r.avgFill); });
+
+  res.json({
+    status: "success",
+    labels: allDays.map(d => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { month: "short", day: "numeric" })),
+    points: allDays.map(d => dayMap[d] ?? 0),
+  });
+});
+
 app.get("/api/bins/:id/analytics", requireAuth, (req, res) => {
   const binId = parseInt(req.params.id, 10);
   if (!db.prepare("SELECT 1 FROM bins WHERE id = ?").get(binId)) return res.status(404).json({ status: "error", message: "Bin not found" });
@@ -502,9 +532,12 @@ app.post("/api/bins/:id/measurement", requireAuth, (req, res) => {
 
   if (raw_distance_cm !== undefined) {
     rawDistance = parseFloat(raw_distance_cm);
+    if (isNaN(rawDistance) || rawDistance < 0) return res.status(400).json({ status: "error", message: "Invalid raw_distance_cm — must be a non-negative number" });
     fillLevel = computeFillLevel(rawDistance, bin.max_height_cm);
   } else if (fill_level_percent !== undefined) {
-    fillLevel = Math.min(100, Math.max(0, parseFloat(fill_level_percent)));
+    fillLevel = parseFloat(fill_level_percent);
+    if (isNaN(fillLevel)) return res.status(400).json({ status: "error", message: "Invalid fill_level_percent — must be a number" });
+    fillLevel = Math.min(100, Math.max(0, fillLevel));
     rawDistance = parseFloat(((1 - fillLevel / 100) * bin.max_height_cm).toFixed(2));
   } else return res.status(400).json({ status: "error", message: "No data provided" });
 
@@ -513,7 +546,9 @@ app.post("/api/bins/:id/measurement", requireAuth, (req, res) => {
   
   recordFillCycle(binId, compartment, fillLevel, timestamp);
   patchFleetCache(binId);
-  broadcast({ type: "update", bin: getBinWithCompartments(binId) });
+  // Use the already-patched cache entry to avoid a redundant DB query
+  const cachedBin = fleetCache?.find(b => b.id === binId);
+  broadcast({ type: "update", bin: cachedBin || getBinWithCompartments(binId) });
 
   res.json({ status: "success", data: { bin_id: binId, compartment, fill_level_percent: fillLevel, timestamp } });
 });
@@ -547,19 +582,25 @@ function purgeOldData() {
     `DELETE FROM fill_cycles WHERE id IN (SELECT id FROM fill_cycles WHERE filled_at < ? LIMIT ${PURGE_BATCH_SIZE})`
   );
 
+  let totalDeleted = 0;
   function purgeBatch() {
     let deleted = 0;
     deleted += deleteMeasurements.run(cutoff).changes;
     deleted += deleteFillCycles.run(cutoff).changes;
 
     if (deleted > 0) {
+      totalDeleted += deleted;
       // Yield to the event loop before the next batch
       setTimeout(purgeBatch, 50);
     } else {
-      // All old data removed — compact the database file
-      console.log("🧹 Purge complete, running VACUUM");
-      db.exec("VACUUM");
-      rebuildFleetCache();
+      // Only VACUUM if rows were actually removed — avoids locking the DB for nothing
+      if (totalDeleted > 0) {
+        console.log(`🧹 Purge complete — ${totalDeleted} rows removed, running VACUUM`);
+        db.exec("VACUUM");
+        rebuildFleetCache();
+      } else {
+        console.log("🧹 Purge check — no stale data found");
+      }
     }
   }
 

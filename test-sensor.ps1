@@ -20,15 +20,15 @@ param (
 #   - Server must be reachable at http://localhost:3001
 #
 # WHAT IT DOES:
-#   Every 2 seconds, sends a POST to /api/bins/<id>/measurement with:
-#     raw_distance_cm (random 2-25 cm) -> mapped to Dry Waste
-#     raw_distance_cm (random 2-25 cm) -> mapped to Wet Waste
+#   Every 3 seconds, sends a POST to /api/bins/<id>/measurement with:
+#     raw_distance_cm (random 0-25 cm) -> mapped to Dry Waste
+#     raw_distance_cm (random 0-25 cm) -> mapped to Wet Waste
 #
 #   The server converts distance to fill % using:
-#     fill % = (distance_cm / max_height_cm) * 100
+#     fill % = ((max_height_cm - distance_cm) / max_height_cm) * 100
 #   With max_height_cm = 25:
-#     distance=2  cm -> 8 % full     (Small distance = Nearly Empty)
-#     distance=25 cm -> 100 % full   (Large distance = Completely Full)
+#     distance=0  cm -> 100 % full   (Sensor touching waste = Full)
+#     distance=25 cm -> 0 % full     (Sensor sees bin floor = Empty)
 #
 # OUTPUT:
 #   [HH:mm:ss] Dry: <dist> cm (<fill>%)  |  Wet: <dist> cm (<fill>%)
@@ -59,9 +59,11 @@ if (-not $DeviceKey) { Write-Warning "[WARN] No DEVICE_API_KEY found in server/.
 Write-Host "Press Ctrl+C to stop`n" -ForegroundColor Yellow
 
 while ($true) {
-    # Generate random distances in the 2-25 cm range (bin height = 25cm)
-    $sensor1 = [math]::Round(((Get-Random -Minimum 2 -Maximum 25) + ((Get-Random) * 0.99)), 2)
-    $sensor2 = [math]::Round(((Get-Random -Minimum 2 -Maximum 25) + ((Get-Random) * 0.99)), 2)
+    # Generate random distances in the 0-25 cm range (bin height = 25cm)
+    # 0 cm = sensor touching waste = 100% full
+    # 25 cm = sensor sees bin floor = 0% full (empty)
+    $sensor1 = [math]::Round((Get-Random -Minimum 0.0 -Maximum 25.0), 2)
+    $sensor2 = [math]::Round((Get-Random -Minimum 0.0 -Maximum 25.0), 2)
 
     $headers = @{}
     if ($DeviceKey) {
@@ -91,5 +93,5 @@ while ($true) {
     }
 
     # Wait before the next simulated reading cycle
-    Start-Sleep -Seconds 2
+    Start-Sleep -Seconds 3
 }

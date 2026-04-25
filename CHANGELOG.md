@@ -2,6 +2,7 @@
 
 | Version | Date       | Type           | Summary                                                                                           |
 | ------- | ---------- | -------------- | ------------------------------------------------------------------------------------------------- |
+| v2.10.0 | 2026-04-25 | 🔧 Fix         | Critical fill-level formula fix, input validation, broadcast optimization, and test script rewrite |
 | v2.9.0  | 2026-04-24 | ⚡ Performance | Backend bottleneck elimination: async auth, DB indexing, fleet caching, and batched purge         |
 | v2.8.0  | 2026-04-24 | 🎨 UI          | Enhanced dropdown opacity and implemented click-outside-to-close behavior for Header navigation   |
 | v2.7.0  | 2026-04-23 | 🔧 Fix         | Resolved Export API 404 and expanded UI visuals                                                   |
@@ -33,6 +34,36 @@
 All notable changes to the BinThere Dashboard are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
+
+---
+
+## [v2.10.0] — 2026-04-25
+
+### Summary
+
+Full project audit and critical bug fix pass. Corrected the **fill-level formula** that was mapping sensor readings backwards (0cm was showing as empty instead of full), added input validation guards, optimized the real-time broadcast pipeline, and rewrote the `test-sensor.ps1` simulation script.
+
+### Fixed
+
+- **Critical: Fill Level Formula Inversion** — `computeFillLevel()` was using `(distance / max_height) * 100`, which incorrectly mapped 0cm → 0% (Empty) and 25cm → 100% (Full). The physical reality is the opposite: the sensor sits at the top of the bin, so 0cm distance = waste touching sensor = **Full**, and 25cm = sensor sees bin floor = **Empty**. Formula corrected to `((max_height - distance) / max_height) * 100`.
+- **Missing Fleet History Endpoint** — `GET /api/analytics/fleet-history` was referenced by the `FleetUtilizationChart` component and the request logger, but the route handler was never implemented. Added the endpoint returning 7-day daily average fill levels grouped by date.
+- **Fleet Chart Cascading Error** — `FleetUtilizationChart.jsx` used a single `Promise.all` + shared `try/catch` for both the utilization score and fleet history fetches. When fleet-history returned a 404 (HTML), the JSON parse error also prevented the utilization score from updating. Separated into independent `try/catch` blocks.
+- **Sensor Data Validation** — Added `NaN` and type guards on `raw_distance_cm` and `fill_level_percent` in the `POST /api/bins/:id/measurement` endpoint. Previously, passing non-numeric values (e.g., `"abc"`) would silently insert `NaN` into the database.
+- **Unnecessary VACUUM** — `purgeOldData()` was running `db.exec("VACUUM")` on every nightly cycle even when zero rows were deleted. Now only triggers VACUUM when rows were actually removed, preventing unnecessary database locks.
+
+### Changed
+
+- **Broadcast Optimization** — `POST /api/bins/:id/measurement` was calling `getBinWithCompartments(binId)` for the WebSocket broadcast *after* already patching the fleet cache. Now uses the already-patched cache entry, eliminating a redundant database query on every sensor reading.
+- **Test Sensor Script Rewrite** — `test-sensor.ps1` updated with:
+  - **3-second interval** (was 2 seconds)
+  - **0–25cm range** (was 2–25cm, excluding 0cm which represents a full bin)
+  - **Fixed broken `Get-Random` logic** — previous code added `(Get-Random) * 0.99` which produced astronomically large values (billions of cm) instead of decimal fractions
+  - **Corrected header comments** to accurately document the distance-to-fill mapping
+
+### Audit Findings (Noted, Not Changed)
+
+- **`exportRoutes.js` L348** — Maintenance prediction uses `Math.random()` for growth rate instead of real historical deltas. This is a known placeholder.
+- **Export routes** open a separate `better-sqlite3` connection per request. Acceptable for read-only export workloads but could be consolidated if export traffic increases.
 
 ---
 
