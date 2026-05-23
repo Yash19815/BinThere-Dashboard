@@ -1,5 +1,5 @@
 param (
-    [int]$BinId = 1
+    [string]$BinId
 )
 
 # =============================================================================
@@ -12,7 +12,8 @@ param (
 #   real-time dashboard updates.
 #
 # USAGE:
-#   .\test-sensor.ps1 [-BinId <id>]
+#   .\test-sensor.ps1
+#   .\test-sensor.ps1 -BinId 3
 #   (Press Ctrl+C to stop)
 #
 # PREREQUISITES:
@@ -37,6 +38,16 @@ param (
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Continue"
+
+# Prompt for bin ID when not provided or invalid, and enforce numeric input only.
+$binIdInput = $BinId
+while ($true) {
+    if ($binIdInput -match "^\d+$") {
+        $BinId = [int]$binIdInput
+        break
+    }
+    $binIdInput = Read-Host "Enter bin ID (numbers only)"
+}
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $EnvPath = Join-Path $ScriptDir "server\.env"
