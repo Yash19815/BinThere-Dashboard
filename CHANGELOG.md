@@ -2,6 +2,7 @@
 
 | Version  | Date       | Type           | Summary                                                                                              |
 | -------- | ---------- | -------------- | ---------------------------------------------------------------------------------------------------- |
+| v2.14.3  | 2026-05-25 | 🔧 Fix         | Corrected Electron production app icon pathing and synchronized native SQLite compilation target    |
 | v2.14.2  | 2026-05-25 | 🔒 Security    | Removed obsolete electron-rebuild dependency and secured exceljs transitive dependencies             |
 | v2.14.1  | 2026-05-19 | 📝 Docs        | Added system connection architecture flowcharts and serial monitor authentication sequence diagrams  |
 | v2.14.0  | 2026-05-17 | ✨ Feature     | Shipped Setup Wizard, Backup Control Layer, native folder browsing, and host directory picker bypass |
@@ -51,6 +52,17 @@
 All notable changes to the BinThere Dashboard are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
+
+## [v2.14.3] — 2026-05-25
+
+### Summary
+
+Corrected critical pathing and version mismatches in the Electron configuration. Resolved a bug where the window icon and build installer icon pointed to a non-existent root path instead of the `assets/` subdirectory. Synchronized the native `better-sqlite3` module compilation target with the active Electron development runtime to prevent runtime module load failures in packaged production environments.
+
+### Fixed
+
+- **Icon Path Resolution** (`electron/main.cjs` & `package.json`): Updated window creation and NSIS build assets to correctly target `electron/assets/icon.ico` instead of the non-existent `electron/icon.ico`.
+- **ABI Version Parity** (`package.json`): Updated the `rebuild:sqlite` script target argument to `42.2.0` to match the current Electron dependency, preventing production-packaged native module loading crashes.
 
 ## [v2.14.2] — 2026-05-25
 

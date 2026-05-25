@@ -1,6 +1,6 @@
 {
   "name": "binthere-dustbin-monitor",
-  "version": "2.14.2",
+  "version": "2.14.3",
   "description": "Smart dustbin monitoring web app using ESP32 ultrasonic sensors — real-time fill level dashboard.",
   "private": true,
   "main": "electron/main.cjs",
@@ -14,7 +14,7 @@
     "kill-port": "npx kill-port 3001 5173 5174",
     "format": "npx prettier --write .",
     "electron:dev": "concurrently --names \"client,electron\" --prefix-colors \"blue,magenta\" \"wait-on tcp:3001 && npm run dev --prefix client\" \"electron .\"",
-    "rebuild:sqlite": "cd server && npm rebuild better-sqlite3 --build-from-source --runtime=electron --target=30.5.1 --dist-url=https://electronjs.org/headers",
+    "rebuild:sqlite": "cd server && npm rebuild better-sqlite3 --build-from-source --runtime=electron --target=42.2.0 --dist-url=https://electronjs.org/headers",
     "rebuild:node": "cd server && npm rebuild better-sqlite3 --build-from-source",
     "electron:build": "npm run build --prefix client && npm run rebuild:sqlite && electron-builder --win --x64"
   },
@@ -34,7 +34,7 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "electron/icon.ico"
+      "icon": "electron/assets/icon.ico"
     },
     "nsis": {
       "oneClick": true,

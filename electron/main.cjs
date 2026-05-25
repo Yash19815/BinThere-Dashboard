@@ -89,7 +89,7 @@ function createWindow() {
     width: 1280,
     height: 800,
     title: "BinThere Fleet Dashboard",
-    icon: path.join(__dirname, "icon.ico"),
+    icon: path.join(__dirname, "assets", "icon.ico"),
     autoHideMenuBar: true, // Hides it when pressing 'Alt'
     webPreferences: {
       nodeIntegration: false,
