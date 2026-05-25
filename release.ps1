@@ -216,8 +216,11 @@ Write-Host "[5/7] Cleaning old build directories..." -ForegroundColor Yellow
 
 # Kill any existing processes that might lock files in dist-electron
 Write-Host "  Terminating existing app processes..." -ForegroundColor DarkGray
+$OldErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = "SilentlyContinue"
 taskkill /F /IM BinThere.exe /T 2>$null | Out-Null
 taskkill /F /IM node.exe /FI "WINDOWTITLE eq BinThere*" /T 2>$null | Out-Null
+$ErrorActionPreference = $OldErrorActionPreference
 # Small pause to let OS release file handles
 Start-Sleep -Seconds 2
 

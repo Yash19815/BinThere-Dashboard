@@ -59,8 +59,11 @@ Write-Host ""
 Write-Host "[3/4] Cleaning old build directories..." -ForegroundColor Yellow
 
 Write-Host "  Terminating existing app processes..." -ForegroundColor DarkGray
+$OldErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = "SilentlyContinue"
 taskkill /F /IM BinThere.exe /T 2>$null | Out-Null
 taskkill /F /IM node.exe /FI "WINDOWTITLE eq BinThere*" /T 2>$null | Out-Null
+$ErrorActionPreference = $OldErrorActionPreference
 Start-Sleep -Seconds 2
 
 if (Test-Path "dist-electron") { Remove-Item -Recurse -Force "dist-electron" }

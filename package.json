@@ -14,15 +14,15 @@
     "kill-port": "npx kill-port 3001 5173 5174",
     "format": "npx prettier --write .",
     "electron:dev": "concurrently --names \"client,electron\" --prefix-colors \"blue,magenta\" \"wait-on tcp:3001 && npm run dev --prefix client\" \"electron .\"",
-    "rebuild:sqlite": "cd server && npm rebuild better-sqlite3 --build-from-source --runtime=electron --target=42.2.0 --dist-url=https://electronjs.org/headers",
+    "rebuild:sqlite": "cd server && npm rebuild better-sqlite3 --build-from-source --runtime=electron --target=30.5.1 --dist-url=https://electronjs.org/headers",
     "rebuild:node": "cd server && npm rebuild better-sqlite3 --build-from-source",
     "electron:build": "npm run build --prefix client && npm run rebuild:sqlite && electron-builder --win --x64"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.4",
     "concurrently": "^9.2.1",
-    "electron": "^42.2.0",
-    "electron-builder": "^26.8.1",
+    "electron": "^30.5.1",
+    "electron-builder": "^24.13.3",
     "wait-on": "^9.0.10"
   },
   "build": {

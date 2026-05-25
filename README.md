@@ -377,7 +377,7 @@ curl http://localhost:3001/api/health
 | Layer         | Standard                                                  |
 | ------------- | --------------------------------------------------------- |
 | **UI/UX**     | React 18 / Vite / Vanilla CSS (Modern Tokens)             |
-| **Desktop**   | Electron 42.2 / IPC / Native Deployment                   |
+| **Desktop**   | Electron 30.5 / IPC / Native Deployment                   |
 | **Server**    | Node.js (Express) / WebSocket (ws)                        |
 | **Edge AI**   | Python 3.x / AWS Bedrock LLM / OpenCV / FastAPI           |
 | **Auth**      | JWT / Bcrypt (Secure Hashing)                             |
