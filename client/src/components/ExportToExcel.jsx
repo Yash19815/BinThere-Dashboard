@@ -23,9 +23,14 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [exportStatus, setExportStatus] = useState(null); // 'success', 'error', null
   const [successInfo, setSuccessInfo] = useState(null);
-  
+
   const [earliestDate, setEarliestDate] = useState(null);
-  const [modalState, setModalState] = useState({ isOpen: false, title: "", message: "", type: "info" });
+  const [modalState, setModalState] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
 
   const toYmd = (d) => d.toISOString().slice(0, 10);
 
@@ -67,7 +72,7 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
         isOpen: true,
         title: "Invalid Range",
         message: "The start date cannot be after the end date.",
-        type: "warning"
+        type: "warning",
       });
       return;
     }
@@ -77,7 +82,7 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
         isOpen: true,
         title: "Range Violation",
         message: `Our database records begin on ${new Date(earliestDate).toLocaleDateString()}.`,
-        type: "error"
+        type: "error",
       });
       return;
     }
@@ -90,7 +95,7 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
         isOpen: true,
         title: "Limit Exceeded",
         message: "Maximum export range is 365 days.",
-        type: "warning"
+        type: "warning",
       });
       return;
     }
@@ -110,7 +115,8 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
         {
           method: "GET",
           headers: {
-            Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            Accept:
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           },
         },
       );
@@ -146,7 +152,13 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
     <div className="sidebar-export-tool glass-card">
       <div className="card-header-row">
         <div className="card-identity">
-          <div className="card-icon-wrap" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+          <div
+            className="card-icon-wrap"
+            style={{
+              background: "rgba(16, 185, 129, 0.1)",
+              borderColor: "rgba(16, 185, 129, 0.2)",
+            }}
+          >
             <FileSpreadsheet className="icon-emerald" size={18} />
           </div>
           <div>
@@ -158,23 +170,29 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
 
       <div className="export-sidebar-body">
         <div className="sidebar-presets">
-          <button onClick={() => applyPreset(0)} className="side-preset">Today</button>
-          <button onClick={() => applyPreset(7)} className="side-preset">7 Days</button>
-          <button onClick={() => applyPreset(30)} className="side-preset">30 Days</button>
+          <button onClick={() => applyPreset(0)} className="side-preset">
+            Today
+          </button>
+          <button onClick={() => applyPreset(7)} className="side-preset">
+            7 Days
+          </button>
+          <button onClick={() => applyPreset(30)} className="side-preset">
+            30 Days
+          </button>
         </div>
 
         <div className="sidebar-pickers">
-          <CalendarPicker 
+          <CalendarPicker
             label="START DATE"
-            value={fromDate} 
+            value={fromDate}
             onChange={setFromDate}
             minDate={earliestDate}
             maxDate={toDate}
           />
           <div className="sidebar-connector" />
-          <CalendarPicker 
+          <CalendarPicker
             label="END DATE"
-            value={toDate} 
+            value={toDate}
             onChange={setToDate}
             minDate={fromDate}
             maxDate={toYmd(new Date())}
@@ -183,10 +201,12 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
 
         <div className="sidebar-meta">
           {earliestDate ? (
-             <div className="meta-chip">
-               <Info size={12} opacity={0.6} />
-               <span>Archive starts {new Date(earliestDate).toLocaleDateString()}</span>
-             </div>
+            <div className="meta-chip">
+              <Info size={12} opacity={0.6} />
+              <span>
+                Archive starts {new Date(earliestDate).toLocaleDateString()}
+              </span>
+            </div>
           ) : (
             <div className="meta-chip loading">
               <Loader2 className="animate-spin" size={12} />
@@ -209,15 +229,21 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
           ) : (
             <Download size={18} />
           )}
-          <span>{isExporting ? "Processing..." : exportStatus === "success" ? "Downloaded" : "Generate Report"}</span>
+          <span>
+            {isExporting
+              ? "Processing..."
+              : exportStatus === "success"
+                ? "Downloaded"
+                : "Generate Report"}
+          </span>
         </button>
 
         {formError && <div className="sidebar-error-msg">{formError}</div>}
       </div>
 
-      <MessageModal 
+      <MessageModal
         isOpen={modalState.isOpen}
-        onClose={() => setModalState(prev => ({ ...prev, isOpen: false }))}
+        onClose={() => setModalState((prev) => ({ ...prev, isOpen: false }))}
         title={modalState.title}
         message={modalState.message}
         type={modalState.type}
@@ -235,13 +261,38 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
           gap: 20px;
           width: 100%;
         }
-        .card-header-row { display: flex; align-items: center; }
-        .card-identity { display: flex; align-items: center; gap: 12px; }
-        .card-icon-wrap { padding: 8px; border-radius: 10px; display: flex; }
-        .icon-emerald { color: #10b981; }
-        .card-title { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text); }
-        .card-subtitle { margin: 0; font-size: 0.75rem; color: var(--text3); }
-        .sidebar-presets { display: flex; gap: 8px; }
+        .card-header-row {
+          display: flex;
+          align-items: center;
+        }
+        .card-identity {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .card-icon-wrap {
+          padding: 8px;
+          border-radius: 10px;
+          display: flex;
+        }
+        .icon-emerald {
+          color: #10b981;
+        }
+        .card-title {
+          margin: 0;
+          font-size: 0.95rem;
+          font-weight: 700;
+          color: var(--text);
+        }
+        .card-subtitle {
+          margin: 0;
+          font-size: 0.75rem;
+          color: var(--text3);
+        }
+        .sidebar-presets {
+          display: flex;
+          gap: 8px;
+        }
         .side-preset {
           background: rgba(255, 255, 255, 0.05);
           border: 1px solid rgba(255, 255, 255, 0.1);
@@ -251,22 +302,62 @@ const ExportToExcel = ({ apiBaseUrl = "http://localhost:3001/api" }) => {
           color: var(--text2);
           cursor: pointer;
         }
-        .sidebar-pickers { display: flex; flex-direction: column; gap: 10px; }
-        .sidebar-connector { height: 10px; width: 1px; background: rgba(255,255,255,0.1); margin: 0 auto; }
-        .meta-chip { display: flex; align-items: center; gap: 8px; font-size: 0.7rem; color: var(--text3); padding: 8px; }
-        .sidebar-generate-btn {
-          display: flex; align-items: center; justify-content: center; gap: 10px;
-          background: #10b981; color: white; border: none; border-radius: 12px;
-          padding: 12px; font-weight: 600; cursor: pointer; transition: 0.2s;
+        .sidebar-pickers {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
         }
-        .sidebar-generate-btn:hover { opacity: 0.9; }
-        .sidebar-error-msg { color: #ef4444; font-size: 0.75rem; text-align: center; margin-top: 8px; }
-        .animate-spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .sidebar-connector {
+          height: 10px;
+          width: 1px;
+          background: rgba(255, 255, 255, 0.1);
+          margin: 0 auto;
+        }
+        .meta-chip {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 0.7rem;
+          color: var(--text3);
+          padding: 8px;
+        }
+        .sidebar-generate-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          background: #10b981;
+          color: white;
+          border: none;
+          border-radius: 12px;
+          padding: 12px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: 0.2s;
+        }
+        .sidebar-generate-btn:hover {
+          opacity: 0.9;
+        }
+        .sidebar-error-msg {
+          color: #ef4444;
+          font-size: 0.75rem;
+          text-align: center;
+          margin-top: 8px;
+        }
+        .animate-spin {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
       `}</style>
     </div>
   );
 };
 
 export default ExportToExcel;
-

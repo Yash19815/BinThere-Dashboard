@@ -14,6 +14,7 @@ This directory contains the Python scripts forming the "Master Brain" of the Bin
 > A Python Virtual Environment (`venv`) is strictly required to isolate dependencies and prevent system-wide conflicts.
 
 1. **Create and Activate a Virtual Environment:**
+
    ```bash
    # Windows
    python -m venv .venv
@@ -25,10 +26,12 @@ This directory contains the Python scripts forming the "Master Brain" of the Bin
    ```
 
 2. **Install Dependencies:**
+
    ```bash
    pip install -r requirements.txt
    ```
-   *(Installs `fastapi`, `uvicorn`, `opencv-python`, `boto3`, `requests`, etc.)*
+
+   _(Installs `fastapi`, `uvicorn`, `opencv-python`, `boto3`, `requests`, etc.)_
 
 3. **AWS Configuration:**
    To leverage AWS Bedrock, your host machine must be configured with valid AWS credentials.

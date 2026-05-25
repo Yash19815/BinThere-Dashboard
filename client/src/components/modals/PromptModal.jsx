@@ -55,7 +55,9 @@ const PromptModal = ({
 
   const handleSubmit = () => {
     // Basic validation: ensure all fields have some value
-    const isComplete = fields.every((f) => String(values[f.name] || "").trim() !== "");
+    const isComplete = fields.every(
+      (f) => String(values[f.name] || "").trim() !== "",
+    );
     if (!isComplete) return;
 
     onSubmit(values);
@@ -100,7 +102,10 @@ const PromptModal = ({
           <button className="modal-btn modal-btn-secondary" onClick={onClose}>
             Cancel
           </button>
-          <button className="modal-btn modal-btn-primary" onClick={handleSubmit}>
+          <button
+            className="modal-btn modal-btn-primary"
+            onClick={handleSubmit}
+          >
             {submitLabel}
           </button>
         </div>

@@ -13,6 +13,7 @@ This directory contains the React 18 frontend for the BinThere dashboard. It uti
 
 Environment variables are dynamically scaffolded by the `scripts/setup.cjs` script at the root level.
 The `.env` file must contain:
+
 - `VITE_API_URL`: The HTTP URL of the backend (e.g., `http://192.168.1.5:3001`).
 - `VITE_WS_URL`: The WebSocket URL of the backend (e.g., `ws://192.168.1.5:3001`).
 
@@ -22,14 +23,17 @@ These variables allow devices on the same local network (like smartphones or tab
 
 1. **Install Dependencies:**
    Typically handled by the global `npm run configure` command at the project root. Manually:
+
    ```bash
    npm install
    ```
 
 2. **Development Mode:**
+
    ```bash
    npm run dev
    ```
+
    The Vite dev server will start (usually on port 5173). It expects the backend server (`tcp:3001`) to be running.
 
 3. **Production Build:**

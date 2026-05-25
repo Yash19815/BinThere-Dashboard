@@ -1,9 +1,9 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
-const { fork } = require('child_process');
-const path = require('path');
-const fs = require('fs');
-const net = require('net');
-const { applyPendingInstall, silentUpdateCheck } = require('./updater.cjs');
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { fork } = require("child_process");
+const path = require("path");
+const fs = require("fs");
+const net = require("net");
+const { applyPendingInstall, silentUpdateCheck } = require("./updater.cjs");
 
 let serverProcess = null;
 let mainWindow = null;
@@ -15,11 +15,11 @@ function waitForPort(port, timeout = 15000) {
     function tryConnect() {
       const socket = new net.Socket();
       socket.setTimeout(500);
-      socket.on('connect', () => {
+      socket.on("connect", () => {
         socket.destroy();
         resolve();
       });
-      socket.on('error', () => {
+      socket.on("error", () => {
         socket.destroy();
         if (Date.now() - start > timeout) {
           reject(new Error(`Port ${port} not available`));
@@ -27,11 +27,11 @@ function waitForPort(port, timeout = 15000) {
           setTimeout(tryConnect, 300);
         }
       });
-      socket.on('timeout', () => {
+      socket.on("timeout", () => {
         socket.destroy();
         setTimeout(tryConnect, 300);
       });
-      socket.connect(port, '127.0.0.1');
+      socket.connect(port, "127.0.0.1");
     }
     tryConnect();
   });
@@ -40,33 +40,47 @@ function waitForPort(port, timeout = 15000) {
 // ─── Spawn the Node backend ───────────────────────────────────────────────────
 function startBackend() {
   const serverPath = app.isPackaged
-    ? path.join(process.resourcesPath, 'server', 'server.js') // <--- Corrected for extraResources
-    : path.join(__dirname, '..', 'server', 'server.js');
+    ? path.join(process.resourcesPath, "server", "server.js") // <--- Corrected for extraResources
+    : path.join(__dirname, "..", "server", "server.js");
 
-  const logFile = path.join(app.getPath('userData'), 'backend-crash.log');
-  fs.writeFileSync(logFile, `--- NEW SESSION STARTED ---\nServer Path: ${serverPath}\n`);
+  const logFile = path.join(app.getPath("userData"), "backend-crash.log");
+  fs.writeFileSync(
+    logFile,
+    `--- NEW SESSION STARTED ---\nServer Path: ${serverPath}\n`,
+  );
 
   // 1. Failsafe: Check if the builder actually unpacked the file!
   if (!fs.existsSync(serverPath)) {
-    fs.appendFileSync(logFile, `[CRITICAL ERROR] The server.js file does not exist at ${serverPath}.\nThis means asarUnpack failed during the build process.\n`);
+    fs.appendFileSync(
+      logFile,
+      `[CRITICAL ERROR] The server.js file does not exist at ${serverPath}.\nThis means asarUnpack failed during the build process.\n`,
+    );
     return;
   }
 
   // 2. Use fork instead of spawn for better Electron compatibility
   serverProcess = fork(serverPath, [], {
     cwd: path.dirname(serverPath),
-    env: { 
-      ...process.env, 
-      PROD_DB_DIR: app.getPath('userData'),
-      IS_ELECTRON: 'true'
+    env: {
+      ...process.env,
+      PROD_DB_DIR: app.getPath("userData"),
+      IS_ELECTRON: "true",
     },
-    stdio: ['ignore', 'pipe', 'pipe', 'ipc']
+    stdio: ["ignore", "pipe", "pipe", "ipc"],
   });
 
-  serverProcess.stdout.on('data', (data) => fs.appendFileSync(logFile, `[STDOUT] ${data}\n`));
-  serverProcess.stderr.on('data', (data) => fs.appendFileSync(logFile, `[STDERR] ${data}\n`));
-  serverProcess.on('error', (err) => fs.appendFileSync(logFile, `[FORK ERROR] ${err}\n`));
-  serverProcess.on('exit', (code) => fs.appendFileSync(logFile, `[EXIT] Process exited with code ${code}\n`));
+  serverProcess.stdout.on("data", (data) =>
+    fs.appendFileSync(logFile, `[STDOUT] ${data}\n`),
+  );
+  serverProcess.stderr.on("data", (data) =>
+    fs.appendFileSync(logFile, `[STDERR] ${data}\n`),
+  );
+  serverProcess.on("error", (err) =>
+    fs.appendFileSync(logFile, `[FORK ERROR] ${err}\n`),
+  );
+  serverProcess.on("exit", (code) =>
+    fs.appendFileSync(logFile, `[EXIT] Process exited with code ${code}\n`),
+  );
 }
 
 // ─── Create the Electron window ───────────────────────────────────────────────
@@ -74,35 +88,37 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
-    title: 'BinThere Fleet Dashboard',
-    icon: path.join(__dirname, 'icon.ico'),
+    title: "BinThere Fleet Dashboard",
+    icon: path.join(__dirname, "icon.ico"),
     autoHideMenuBar: true, // Hides it when pressing 'Alt'
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(__dirname, "preload.js"),
     },
   });
 
   mainWindow.setMenu(null); // <--- Removes the File/Edit/View menu completely
 
   if (app.isPackaged) {
-    mainWindow.loadFile(path.join(__dirname, '..', 'client', 'dist', 'index.html'));
+    mainWindow.loadFile(
+      path.join(__dirname, "..", "client", "dist", "index.html"),
+    );
   } else {
-    mainWindow.loadURL('http://localhost:5173');
+    mainWindow.loadURL("http://localhost:5173");
   }
 
-  mainWindow.on('closed', () => {
+  mainWindow.on("closed", () => {
     mainWindow = null;
   });
 }
 
 // ─── App lifecycle ────────────────────────────────────────────────────────────
 
-ipcMain.handle('app-version', () => app.getVersion());
-ipcMain.handle('dialog:openDirectory', async () => {
+ipcMain.handle("app-version", () => app.getVersion());
+ipcMain.handle("dialog:openDirectory", async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
-    properties: ['openDirectory']
+    properties: ["openDirectory"],
   });
   if (!canceled) {
     return filePaths[0];
@@ -115,10 +131,10 @@ app.whenReady().then(async () => {
 
   // Wait for backend to be ready, show native error if it fails
   await waitForPort(3001).catch((err) => {
-    const logPath = path.join(app.getPath('userData'), 'backend-crash.log');
+    const logPath = path.join(app.getPath("userData"), "backend-crash.log");
     dialog.showErrorBox(
-      'Backend Failed to Start', 
-      `The server crashed. Please check the log file at:\n\n${logPath}`
+      "Backend Failed to Start",
+      `The server crashed. Please check the log file at:\n\n${logPath}`,
     );
   });
 
@@ -130,16 +146,16 @@ app.whenReady().then(async () => {
     }, 5000);
   }
 
-  app.on('activate', () => {
+  app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
 });
 
-app.on('will-quit', () => {
+app.on("will-quit", () => {
   if (serverProcess) {
     serverProcess.kill();
     serverProcess = null;

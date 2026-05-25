@@ -60,7 +60,11 @@ export default function App() {
             headers: authHeaders(token),
           });
           const data = await res.json();
-          if (data.status !== "success" || !data.config || !data.config.EMPTY_THRESHOLD) {
+          if (
+            data.status !== "success" ||
+            !data.config ||
+            !data.config.EMPTY_THRESHOLD
+          ) {
             setIsSetupOpen(true);
           } else {
             localStorage.setItem("bt_setup_completed", "true");
@@ -257,7 +261,13 @@ export default function App() {
               <select
                 className="analytics-bin-select"
                 value={analyticsBinId || ""}
-                onChange={(e) => setAnalyticsBinId(e.target.value === "fleet" ? "fleet" : Number(e.target.value))}
+                onChange={(e) =>
+                  setAnalyticsBinId(
+                    e.target.value === "fleet"
+                      ? "fleet"
+                      : Number(e.target.value),
+                  )
+                }
               >
                 <option value="fleet">All Bins — Overall</option>
                 {bins.map((b) => (
@@ -303,7 +313,6 @@ export default function App() {
           </>
         )}
       </main>
-
 
       {selectedBin && (
         <HistoryModal

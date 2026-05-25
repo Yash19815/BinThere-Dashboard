@@ -29,11 +29,29 @@ const MessageModal = ({
   const getIcon = () => {
     switch (type) {
       case "warning":
-        return <AlertTriangle size={28} className="modal-icon warning" style={{ color: "#fbbf24" }} />;
+        return (
+          <AlertTriangle
+            size={28}
+            className="modal-icon warning"
+            style={{ color: "#fbbf24" }}
+          />
+        );
       case "error":
-        return <AlertTriangle size={28} className="modal-icon error" style={{ color: "#f87171" }} />;
+        return (
+          <AlertTriangle
+            size={28}
+            className="modal-icon error"
+            style={{ color: "#f87171" }}
+          />
+        );
       default:
-        return <Info size={28} className="modal-icon info" style={{ color: "#3b82f6" }} />;
+        return (
+          <Info
+            size={28}
+            className="modal-icon info"
+            style={{ color: "#3b82f6" }}
+          />
+        );
     }
   };
 
@@ -59,14 +77,19 @@ const MessageModal = ({
           </button>
         </div>
 
-        <div className="modal-body" style={{ padding: "24px", lineHeight: "1.6" }}>
-          <p style={{ margin: 0, color: "var(--text2)", fontSize: "1rem" }}>{message}</p>
+        <div
+          className="modal-body"
+          style={{ padding: "24px", lineHeight: "1.6" }}
+        >
+          <p style={{ margin: 0, color: "var(--text2)", fontSize: "1rem" }}>
+            {message}
+          </p>
         </div>
 
         <div className="modal-footer" style={{ padding: "16px 24px" }}>
-          <button 
-            className="modal-btn modal-btn-primary" 
-            onClick={onClose} 
+          <button
+            className="modal-btn modal-btn-primary"
+            onClick={onClose}
             autoFocus
             style={{ width: "100%", padding: "10px" }}
           >
@@ -75,7 +98,9 @@ const MessageModal = ({
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @keyframes modalFadeIn {
           from { opacity: 0; transform: translateY(20px) scale(0.95); }
           to { opacity: 1; transform: translateY(0) scale(1); }
@@ -84,7 +109,9 @@ const MessageModal = ({
           border-radius: 16px;
           overflow: hidden;
         }
-      `}} />
+      `,
+        }}
+      />
     </div>
   );
 };

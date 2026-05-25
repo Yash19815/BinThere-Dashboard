@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+} from "lucide-react";
 
 /**
  * A custom, premium glassmorphic date picker component.
@@ -7,7 +11,9 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-reac
  */
 const CalendarPicker = ({ value, onChange, minDate, maxDate, label }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [viewDate, setViewDate] = useState(value ? new Date(value) : new Date());
+  const [viewDate, setViewDate] = useState(
+    value ? new Date(value) : new Date(),
+  );
   const containerRef = useRef(null);
 
   // Close when clicking outside
@@ -26,10 +32,15 @@ const CalendarPicker = ({ value, onChange, minDate, maxDate, label }) => {
     // Handle YYYY-MM-DD
     const [y, m, d] = dateString.split("-").map(Number);
     const date = new Date(y, m - 1, d);
-    return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
-  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const getDaysInMonth = (year, month) =>
+    new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
 
   const handlePrevMonth = (e) => {
@@ -53,7 +64,7 @@ const CalendarPicker = ({ value, onChange, minDate, maxDate, label }) => {
 
   const isDateDisabled = (day) => {
     const date = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
-    
+
     if (minDate) {
       const [y, m, d] = minDate.split("-").map(Number);
       const min = new Date(y, m - 1, d);
@@ -61,14 +72,14 @@ const CalendarPicker = ({ value, onChange, minDate, maxDate, label }) => {
       date.setHours(0, 0, 0, 0);
       if (date < min) return true;
     }
-    
+
     if (maxDate) {
       const [y, m, d] = maxDate.split("-").map(Number);
       const max = new Date(y, m - 1, d);
       max.setHours(23, 59, 59, 999);
       if (date > max) return true;
     }
-    
+
     return false;
   };
 
@@ -82,19 +93,29 @@ const CalendarPicker = ({ value, onChange, minDate, maxDate, label }) => {
     );
   };
 
-  const daysInMonth = getDaysInMonth(viewDate.getFullYear(), viewDate.getMonth());
-  const firstDay = getFirstDayOfMonth(viewDate.getFullYear(), viewDate.getMonth());
+  const daysInMonth = getDaysInMonth(
+    viewDate.getFullYear(),
+    viewDate.getMonth(),
+  );
+  const firstDay = getFirstDayOfMonth(
+    viewDate.getFullYear(),
+    viewDate.getMonth(),
+  );
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const monthName = viewDate.toLocaleString("default", { month: "long" });
 
   return (
     <div className="calendar-picker-container" ref={containerRef}>
       {label && <label className="calendar-label">{label}</label>}
-      <div 
-        className={`calendar-input-wrapper ${isOpen ? "active" : ""}`} 
+      <div
+        className={`calendar-input-wrapper ${isOpen ? "active" : ""}`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <CalendarIcon size={16} className="calendar-icon-svg" style={{ color: "var(--text3)" }} />
+        <CalendarIcon
+          size={16}
+          className="calendar-icon-svg"
+          style={{ color: "var(--text3)" }}
+        />
         <span className={`calendar-value ${!value ? "placeholder" : ""}`}>
           {value ? formatDate(value) : "Select date"}
         </span>
@@ -106,17 +127,25 @@ const CalendarPicker = ({ value, onChange, minDate, maxDate, label }) => {
             <button onClick={handlePrevMonth} className="nav-btn">
               <ChevronLeft size={16} />
             </button>
-            <span className="month-year">{monthName} {viewDate.getFullYear()}</span>
+            <span className="month-year">
+              {monthName} {viewDate.getFullYear()}
+            </span>
             <button onClick={handleNextMonth} className="nav-btn">
               <ChevronRight size={16} />
             </button>
           </div>
           <div className="calendar-grid">
-            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(d => (
-              <div key={d} className="day-name">{d}</div>
+            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((d) => (
+              <div key={d} className="day-name">
+                {d}
+              </div>
             ))}
-            {Array(firstDay).fill(null).map((_, i) => <div key={`empty-${i}`} />)}
-            {days.map(day => (
+            {Array(firstDay)
+              .fill(null)
+              .map((_, i) => (
+                <div key={`empty-${i}`} />
+              ))}
+            {days.map((day) => (
               <button
                 key={day}
                 className={`day-btn ${isSelected(day) ? "selected" : ""} ${isDateDisabled(day) ? "disabled" : ""}`}
@@ -130,7 +159,9 @@ const CalendarPicker = ({ value, onChange, minDate, maxDate, label }) => {
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .calendar-picker-container { 
           position: relative; 
           width: 100%; 
@@ -257,7 +288,9 @@ const CalendarPicker = ({ value, onChange, minDate, maxDate, label }) => {
           opacity: 0.1; 
           cursor: not-allowed; 
         }
-      `}} />
+      `,
+        }}
+      />
     </div>
   );
 };

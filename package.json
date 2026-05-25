@@ -1,6 +1,6 @@
 {
   "name": "binthere-dustbin-monitor",
-  "version": "2.14.1",
+  "version": "2.14.2",
   "description": "Smart dustbin monitoring web app using ESP32 ultrasonic sensors — real-time fill level dashboard.",
   "private": true,
   "main": "electron/main.cjs",
@@ -23,7 +23,6 @@
     "concurrently": "^9.2.1",
     "electron": "^42.2.0",
     "electron-builder": "^26.8.1",
-    "electron-rebuild": "^3.2.9",
     "wait-on": "^9.0.10"
   },
   "build": {

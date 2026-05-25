@@ -63,11 +63,15 @@ function formatIstDateTime(isoString) {
 router.get("/export/metadata", (req, res) => {
   const db = new Database(DB_PATH, { readonly: true });
   try {
-    const row = db.prepare("SELECT MIN(timestamp) as earliest FROM measurements").get();
+    const row = db
+      .prepare("SELECT MIN(timestamp) as earliest FROM measurements")
+      .get();
     res.json({ status: "success", earliestDate: row?.earliest || null });
   } catch (error) {
     console.error("Metadata fetch error:", error);
-    res.status(500).json({ status: "error", message: "Failed to fetch export metadata" });
+    res
+      .status(500)
+      .json({ status: "error", message: "Failed to fetch export metadata" });
   } finally {
     db.close();
   }
@@ -100,7 +104,9 @@ router.get("/export/excel", async (req, res) => {
     const fromUtcIso = from ? istYmdToUtcIso(from, 0, 0, 0, 0) : null;
     const toUtcIso = to ? istYmdToUtcIso(to, 23, 59, 59, 999) : null;
 
-    console.log(`[EXPORT] Excel report requested: range ${from || "all-time"} to ${to || "now"}`);
+    console.log(
+      `[EXPORT] Excel report requested: range ${from || "all-time"} to ${to || "now"}`,
+    );
 
     const measurementConditions = [];
     const measurementParams = [];

@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { API_URL, authHeaders } from "../../utils/constants";
 import { TrendingUp, Info } from "lucide-react";
 
@@ -34,14 +40,18 @@ export default function FleetUtilizationChart({ token, refreshKey }) {
     setLoading(true);
     // Fetch score and history independently so one failure doesn't block the other
     try {
-      const scoreRes = await fetch(`${API_URL}/api/analytics/utilization`, { headers: authHeaders(token) });
+      const scoreRes = await fetch(`${API_URL}/api/analytics/utilization`, {
+        headers: authHeaders(token),
+      });
       const scoreJson = await scoreRes.json();
       if (scoreJson.status === "success") setScore(scoreJson.utilization_score);
     } catch (err) {
       console.error("Failed to fetch utilization score:", err);
     }
     try {
-      const historyRes = await fetch(`${API_URL}/api/analytics/fleet-history`, { headers: authHeaders(token) });
+      const historyRes = await fetch(`${API_URL}/api/analytics/fleet-history`, {
+        headers: authHeaders(token),
+      });
       const historyJson = await historyRes.json();
       if (historyJson.status === "success") setHistory(historyJson);
     } catch (err) {
@@ -55,7 +65,12 @@ export default function FleetUtilizationChart({ token, refreshKey }) {
   }, [fetchData]);
 
   // Chart dimensions
-  const W = 400, H = 120, PL = 30, PR = 10, PT = 10, PB = 20;
+  const W = 400,
+    H = 120,
+    PL = 30,
+    PR = 10,
+    PT = 10,
+    PB = 20;
   const chartW = W - PL - PR;
   const chartH = H - PT - PB;
 
@@ -66,17 +81,17 @@ export default function FleetUtilizationChart({ token, refreshKey }) {
     const yMax = Math.max(Math.ceil(rawMax / 10) * 10 + 10, 50);
     const yMin = 0;
 
-    const points = hasData 
+    const points = hasData
       ? history.points.map((val, i) => ({
           x: PL + (i / Math.max(len - 1, 1)) * chartW,
           y: PT + chartH - ((val - yMin) / (yMax - yMin)) * chartH,
-          val
+          val,
         }))
       : [];
 
-    const yTicks = [0, yMax / 2, yMax].map(v => ({
+    const yTicks = [0, yMax / 2, yMax].map((v) => ({
       v,
-      y: PT + chartH - ((v - yMin) / (yMax - yMin)) * chartH
+      y: PT + chartH - ((v - yMin) / (yMax - yMin)) * chartH,
     }));
 
     const xLabels = hasData ? history.labels : [];
@@ -84,10 +99,13 @@ export default function FleetUtilizationChart({ token, refreshKey }) {
     return { points, yTicks, xLabels };
   }, [history, chartW, chartH]);
 
-  const pathD = useMemo(() => smoothPath(points, PT, PT + chartH), [points, PT, chartH]);
+  const pathD = useMemo(
+    () => smoothPath(points, PT, PT + chartH),
+    [points, PT, chartH],
+  );
   const areaD = useMemo(() => {
     if (points.length < 2) return "";
-    return `${pathD} L ${points[points.length-1].x} ${PT + chartH} L ${points[0].x} ${PT + chartH} Z`;
+    return `${pathD} L ${points[points.length - 1].x} ${PT + chartH} L ${points[0].x} ${PT + chartH} Z`;
   }, [pathD, points, chartH]);
 
   const getStatusColor = (val) => {
@@ -98,57 +116,73 @@ export default function FleetUtilizationChart({ token, refreshKey }) {
   };
 
   const statusColor = getStatusColor(score);
-  
+
   // Circular progress
   const radius = 32;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = score !== null ? circumference - (score / 100) * circumference : circumference;
+  const strokeDashoffset =
+    score !== null
+      ? circumference - (score / 100) * circumference
+      : circumference;
 
   return (
     <div className="fleet-chart-card glass-card">
-        <div className="card-header-row">
-          <div className="card-identity">
-            <div className="card-icon-wrap">
-              <TrendingUp size={18} className="icon-primary" />
-            </div>
-            <div>
-              <h3 className="card-title">Fleet Utilization</h3>
-              <p className="card-subtitle">Real-time aggregate fill levels</p>
-            </div>
+      <div className="card-header-row">
+        <div className="card-identity">
+          <div className="card-icon-wrap">
+            <TrendingUp size={18} className="icon-primary" />
           </div>
-          
-          <div className="score-summary-compact">
-            <div className="circular-progress-wrap">
-              <svg width="64" height="64" viewBox="0 0 84 84">
-                <circle cx="42" cy="42" r={radius} className="stat-circle-bg" strokeWidth="8" />
-                <circle
-                  cx="42" cy="42" r={radius}
-                  className="stat-circle-fg"
-                  strokeWidth="8"
-                  style={{
-                    stroke: statusColor,
-                    strokeDasharray: circumference,
-                    strokeDashoffset: strokeDashoffset,
-                  }}
-                />
-              </svg>
-              <div className="score-text-compact">
-                <span className="score-num-compact">{score !== null ? score : "—"}</span>
-                <span className="score-unit-compact">%</span>
-              </div>
-            </div>
-            <div className="score-label-wrap-compact">
-              <span className="score-status-compact" style={{ color: statusColor }}>
-                {score <= 40 ? "Optimal" : score <= 70 ? "Moderate" : "Critical"}
-              </span>
-            </div>
+          <div>
+            <h3 className="card-title">Fleet Utilization</h3>
+            <p className="card-subtitle">Real-time aggregate fill levels</p>
           </div>
         </div>
 
-        <div className="chart-fill-area">
-          <div className="history-chart-wrap">
-          <svg 
-            viewBox={`0 0 ${W} ${H}`} 
+        <div className="score-summary-compact">
+          <div className="circular-progress-wrap">
+            <svg width="64" height="64" viewBox="0 0 84 84">
+              <circle
+                cx="42"
+                cy="42"
+                r={radius}
+                className="stat-circle-bg"
+                strokeWidth="8"
+              />
+              <circle
+                cx="42"
+                cy="42"
+                r={radius}
+                className="stat-circle-fg"
+                strokeWidth="8"
+                style={{
+                  stroke: statusColor,
+                  strokeDasharray: circumference,
+                  strokeDashoffset: strokeDashoffset,
+                }}
+              />
+            </svg>
+            <div className="score-text-compact">
+              <span className="score-num-compact">
+                {score !== null ? score : "—"}
+              </span>
+              <span className="score-unit-compact">%</span>
+            </div>
+          </div>
+          <div className="score-label-wrap-compact">
+            <span
+              className="score-status-compact"
+              style={{ color: statusColor }}
+            >
+              {score <= 40 ? "Optimal" : score <= 70 ? "Moderate" : "Critical"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="chart-fill-area">
+        <div className="history-chart-wrap">
+          <svg
+            viewBox={`0 0 ${W} ${H}`}
             className="history-svg"
             onMouseMove={(e) => {
               if (!history) return;
@@ -156,7 +190,8 @@ export default function FleetUtilizationChart({ token, refreshKey }) {
               const rect = svg.getBoundingClientRect();
               const scaleX = W / rect.width;
               const mouseX = (e.clientX - rect.left) * scaleX;
-              let closest = 0, minDist = Infinity;
+              let closest = 0,
+                minDist = Infinity;
               points.forEach((pt, i) => {
                 const dist = Math.abs(pt.x - mouseX);
                 if (dist < minDist) {
@@ -176,44 +211,98 @@ export default function FleetUtilizationChart({ token, refreshKey }) {
             </defs>
 
             {/* Y Ticks */}
-            {yTicks.map(t => (
+            {yTicks.map((t) => (
               <g key={t.v}>
-                <line x1={PL} y1={t.y} x2={W-PR} y2={t.y} stroke="currentColor" strokeOpacity="0.05" strokeDasharray="4 4" />
-                <text x={PL-5} y={t.y+4} textAnchor="end" fontSize="9" fill="currentColor" opacity="0.3">{t.v}%</text>
+                <line
+                  x1={PL}
+                  y1={t.y}
+                  x2={W - PR}
+                  y2={t.y}
+                  stroke="currentColor"
+                  strokeOpacity="0.05"
+                  strokeDasharray="4 4"
+                />
+                <text
+                  x={PL - 5}
+                  y={t.y + 4}
+                  textAnchor="end"
+                  fontSize="9"
+                  fill="currentColor"
+                  opacity="0.3"
+                >
+                  {t.v}%
+                </text>
               </g>
             ))}
 
             {/* X Labels */}
             {xLabels.map((lbl, i) => (
-              <text key={i} x={points[i].x} y={H-2} textAnchor="middle" fontSize="9" fill="currentColor" opacity="0.3">
-                {lbl.split(' ')[0]}
+              <text
+                key={i}
+                x={points[i].x}
+                y={H - 2}
+                textAnchor="middle"
+                fontSize="9"
+                fill="currentColor"
+                opacity="0.3"
+              >
+                {lbl.split(" ")[0]}
               </text>
             ))}
 
             <path d={areaD} fill="url(#fleet-grad)" />
-            <path d={pathD} fill="none" stroke={statusColor} strokeWidth="2.5" strokeLinecap="round" />
+            <path
+              d={pathD}
+              fill="none"
+              stroke={statusColor}
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
 
             {points.map((pt, i) => (
-              <circle 
-                key={i} 
-                cx={pt.x} cy={pt.y} 
-                r={hoveredIdx === i ? 4 : 2} 
-                fill={statusColor} 
-                stroke="var(--glass-bg-strong)" 
+              <circle
+                key={i}
+                cx={pt.x}
+                cy={pt.y}
+                r={hoveredIdx === i ? 4 : 2}
+                fill={statusColor}
+                stroke="var(--glass-bg-strong)"
                 strokeWidth="1"
-                style={{ transition: 'r 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+                style={{
+                  transition: "r 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                }}
               />
             ))}
 
             {hoveredIdx !== null && (
-              <g style={{ pointerEvents: 'none' }}>
-                <line x1={points[hoveredIdx].x} y1={PT} x2={points[hoveredIdx].x} y2={PT+chartH} stroke="currentColor" strokeOpacity="0.2" strokeDasharray="3 2" />
-                <rect 
-                  x={points[hoveredIdx].x - 20} y={points[hoveredIdx].y - 25} 
-                  width="40" height="20" rx="4" 
-                  fill="var(--glass-bg-strong)" stroke="var(--glass-border)" strokeWidth="0.5" 
+              <g style={{ pointerEvents: "none" }}>
+                <line
+                  x1={points[hoveredIdx].x}
+                  y1={PT}
+                  x2={points[hoveredIdx].x}
+                  y2={PT + chartH}
+                  stroke="currentColor"
+                  strokeOpacity="0.2"
+                  strokeDasharray="3 2"
                 />
-                <text x={points[hoveredIdx].x} y={points[hoveredIdx].y - 11} textAnchor="middle" fontSize="10" fontWeight="bold" fill="white">
+                <rect
+                  x={points[hoveredIdx].x - 20}
+                  y={points[hoveredIdx].y - 25}
+                  width="40"
+                  height="20"
+                  rx="4"
+                  fill="var(--glass-bg-strong)"
+                  stroke="var(--glass-border)"
+                  strokeWidth="0.5"
+                />
+                <text
+                  x={points[hoveredIdx].x}
+                  y={points[hoveredIdx].y - 11}
+                  textAnchor="middle"
+                  fontSize="10"
+                  fontWeight="bold"
+                  fill="white"
+                >
                   {points[hoveredIdx].val}%
                 </text>
               </g>

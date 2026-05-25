@@ -16,7 +16,12 @@ import { API_URL, authHeaders } from "../../utils/constants";
 /**
  * AdminSettingsModal - Central administrative panel for dynamic thresholds and SQLite database hot-backups.
  */
-export default function AdminSettingsModal({ isOpen, onClose, token, onConfigUpdate }) {
+export default function AdminSettingsModal({
+  isOpen,
+  onClose,
+  token,
+  onConfigUpdate,
+}) {
   const [activeTab, setActiveTab] = useState("thresholds");
   const [emptyThreshold, setEmptyThreshold] = useState(20);
   const [fullThreshold, setFullThreshold] = useState(60);
@@ -25,7 +30,9 @@ export default function AdminSettingsModal({ isOpen, onClose, token, onConfigUpd
   const [backupLoading, setBackupLoading] = useState(false);
   const [backupResult, setBackupResult] = useState(null);
 
-  const isElectron = !!(window.electronAPI && window.electronAPI.selectDirectory);
+  const isElectron = !!(
+    window.electronAPI && window.electronAPI.selectDirectory
+  );
 
   // Fetch current settings on mount
   useEffect(() => {
@@ -85,7 +92,10 @@ export default function AdminSettingsModal({ isOpen, onClose, token, onConfigUpd
           return;
         }
       } catch (err) {
-        console.warn("Backend folder picker failed, falling back to browser folder select:", err);
+        console.warn(
+          "Backend folder picker failed, falling back to browser folder select:",
+          err,
+        );
       }
 
       // Graceful fallback to sandboxed browser input
@@ -106,7 +116,8 @@ export default function AdminSettingsModal({ isOpen, onClose, token, onConfigUpd
             const files = e.target.files;
             if (files && files.length > 0) {
               const firstFile = files[0];
-              const relativePath = firstFile.webkitRelativePath || firstFile.name;
+              const relativePath =
+                firstFile.webkitRelativePath || firstFile.name;
               const folderName = relativePath.split("/")[0] || "Backups";
               const selectedPath = `C:/BinThere/Backups/${folderName}`;
               setBackupDir(selectedPath);
@@ -237,8 +248,9 @@ export default function AdminSettingsModal({ isOpen, onClose, token, onConfigUpd
             <div className="settings-tab-content">
               <h3 className="tab-headline">Sensor Limit Calibration</h3>
               <p className="tab-desc">
-                Adjust empty and full boundary variables live across physical compartments. Changes
-                will trigger instant fleet capacity calculations.
+                Adjust empty and full boundary variables live across physical
+                compartments. Changes will trigger instant fleet capacity
+                calculations.
               </p>
 
               <div className="threshold-layout">
@@ -254,7 +266,9 @@ export default function AdminSettingsModal({ isOpen, onClose, token, onConfigUpd
                       min="0"
                       max="100"
                       value={emptyThreshold}
-                      onChange={(e) => setEmptyThreshold(Number(e.target.value))}
+                      onChange={(e) =>
+                        setEmptyThreshold(Number(e.target.value))
+                      }
                       className="wizard-slider empty-slider"
                     />
                   </div>
@@ -262,7 +276,8 @@ export default function AdminSettingsModal({ isOpen, onClose, token, onConfigUpd
                   <div className="form-group threshold-slider-group">
                     <div className="slider-label-row">
                       <label className="form-label">
-                        🔴 Alert Full capacity: <strong>{fullThreshold}%</strong>
+                        🔴 Alert Full capacity:{" "}
+                        <strong>{fullThreshold}%</strong>
                       </label>
                     </div>
                     <input
@@ -283,13 +298,17 @@ export default function AdminSettingsModal({ isOpen, onClose, token, onConfigUpd
                         className="bin-marker full-marker"
                         style={{ bottom: `${fullThreshold}%` }}
                       >
-                        <span className="marker-lbl">Full ({fullThreshold}%)</span>
+                        <span className="marker-lbl">
+                          Full ({fullThreshold}%)
+                        </span>
                       </div>
                       <div
                         className="bin-marker empty-marker"
                         style={{ bottom: `${emptyThreshold}%` }}
                       >
-                        <span className="marker-lbl">Empty ({emptyThreshold}%)</span>
+                        <span className="marker-lbl">
+                          Empty ({emptyThreshold}%)
+                        </span>
                       </div>
                     </div>
                     <div
@@ -306,7 +325,10 @@ export default function AdminSettingsModal({ isOpen, onClose, token, onConfigUpd
 
               {!validateThresholds() && (
                 <div className="wizard-alert-banner">
-                  <span>EMPTY boundary must be strictly lower than FULL capacity limit.</span>
+                  <span>
+                    EMPTY boundary must be strictly lower than FULL capacity
+                    limit.
+                  </span>
                 </div>
               )}
 
@@ -327,7 +349,8 @@ export default function AdminSettingsModal({ isOpen, onClose, token, onConfigUpd
             <div className="settings-tab-content">
               <h3 className="tab-headline">SQLite Hot-Backups</h3>
               <p className="tab-desc">
-                Setup persistent directories and perform on-demand hot backups of your active transaction database (`bins.db`) securely.
+                Setup persistent directories and perform on-demand hot backups
+                of your active transaction database (`bins.db`) securely.
               </p>
 
               <div className="form-group">
@@ -364,7 +387,10 @@ export default function AdminSettingsModal({ isOpen, onClose, token, onConfigUpd
                 <div className="trigger-backup-row">
                   <div className="trigger-desc">
                     <strong>Trigger Immediate Hot-Backup</strong>
-                    <p>Creates a point-in-time snapshot using safe multi-thread transactions.</p>
+                    <p>
+                      Creates a point-in-time snapshot using safe multi-thread
+                      transactions.
+                    </p>
                   </div>
                   <button
                     className="instant-backup-btn"
@@ -373,7 +399,10 @@ export default function AdminSettingsModal({ isOpen, onClose, token, onConfigUpd
                   >
                     {backupLoading ? (
                       <>
-                        <Loader2 className="animate-spin text-green" size={16} />
+                        <Loader2
+                          className="animate-spin text-green"
+                          size={16}
+                        />
                         <span>Backing Up...</span>
                       </>
                     ) : (

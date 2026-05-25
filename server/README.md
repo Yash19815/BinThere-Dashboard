@@ -12,6 +12,7 @@ This directory contains the Node.js/Express backend that powers the BinThere eco
 ## Database Management
 
 The server uses a local SQLite database (`bins.db`).
+
 - **Development Mode:** The database is created and stored in the `server/` directory.
 - **Production Mode (Electron):** The path is overridden via the `PROD_DB_DIR` environment variable to write to the user's secure AppData directory (`AppData/Roaming/BinThere`), ensuring data persistence across app updates.
 
@@ -21,6 +22,7 @@ The server uses a local SQLite database (`bins.db`).
 ## Environment Variables
 
 Configuration is driven via the `.env` file (generated automatically by `scripts/setup.cjs`). Key variables include:
+
 - `PORT`: The API port (Default: 3001).
 - `JWT_SECRET`: Secure session token key.
 - `JWT_EXPIRES_IN`: Token validity duration.
@@ -30,6 +32,7 @@ Configuration is driven via the `.env` file (generated automatically by `scripts
 ## Setup & Running
 
 1. **Install Dependencies:**
+
    ```bash
    npm install
    ```

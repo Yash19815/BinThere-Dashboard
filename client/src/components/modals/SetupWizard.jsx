@@ -25,7 +25,9 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
 
   if (!isOpen) return null;
 
-  const isElectron = !!(window.electronAPI && window.electronAPI.selectDirectory);
+  const isElectron = !!(
+    window.electronAPI && window.electronAPI.selectDirectory
+  );
 
   const handleSelectDirectory = async () => {
     if (isElectron) {
@@ -56,7 +58,10 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
           return;
         }
       } catch (err) {
-        console.warn("Backend folder picker failed, falling back to browser folder select:", err);
+        console.warn(
+          "Backend folder picker failed, falling back to browser folder select:",
+          err,
+        );
       }
 
       // Graceful fallback to sandboxed browser input
@@ -77,7 +82,8 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
             const files = e.target.files;
             if (files && files.length > 0) {
               const firstFile = files[0];
-              const relativePath = firstFile.webkitRelativePath || firstFile.name;
+              const relativePath =
+                firstFile.webkitRelativePath || firstFile.name;
               const folderName = relativePath.split("/")[0] || "Backups";
               const selectedPath = `C:/BinThere/Backups/${folderName}`;
               setBackupDir(selectedPath);
@@ -162,7 +168,11 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
             <h2>System Initialization Wizard</h2>
           </div>
           {onClose && (
-            <button className="modal-close" onClick={onClose} aria-label="Close">
+            <button
+              className="modal-close"
+              onClick={onClose}
+              aria-label="Close"
+            >
               <X size={18} />
             </button>
           )}
@@ -172,23 +182,28 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
           {step === 1 && (
             <div className="wizard-step wizard-step-welcome">
               <div className="wizard-icon-hero">🗑️</div>
-              <h3 className="wizard-headline">Welcome to BinThere Waste Intelligence</h3>
+              <h3 className="wizard-headline">
+                Welcome to BinThere Waste Intelligence
+              </h3>
               <p className="wizard-desc">
-                Let's configure your system thresholds and dynamic persistent backup settings
-                to initialize your smart dashboard correctly. This setup sets baseline parameters
-                across physical sensor fleets.
+                Let's configure your system thresholds and dynamic persistent
+                backup settings to initialize your smart dashboard correctly.
+                This setup sets baseline parameters across physical sensor
+                fleets.
               </p>
               <div className="wizard-feature-list">
                 <div className="wizard-feature-item">
                   <div className="feat-bullet">✓</div>
                   <div>
-                    <strong>Fill Cycle Optimization:</strong> Distinguish between full bins and collection sweeps.
+                    <strong>Fill Cycle Optimization:</strong> Distinguish
+                    between full bins and collection sweeps.
                   </div>
                 </div>
                 <div className="wizard-feature-item">
                   <div className="feat-bullet">✓</div>
                   <div>
-                    <strong>On-Demand Snapshots:</strong> Trigger lightweight SQLite hot-backups dynamically.
+                    <strong>On-Demand Snapshots:</strong> Trigger lightweight
+                    SQLite hot-backups dynamically.
                   </div>
                 </div>
               </div>
@@ -197,9 +212,12 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
 
           {step === 2 && (
             <div className="wizard-step wizard-step-thresholds">
-              <h3 className="wizard-headline">Configure Compartment Thresholds</h3>
+              <h3 className="wizard-headline">
+                Configure Compartment Thresholds
+              </h3>
               <p className="wizard-desc">
-                Specify operational percentage boundaries for alert logs and dashboard color indexes.
+                Specify operational percentage boundaries for alert logs and
+                dashboard color indexes.
               </p>
 
               <div className="wizard-threshold-layout">
@@ -215,11 +233,14 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
                       min="0"
                       max="100"
                       value={emptyThreshold}
-                      onChange={(e) => setEmptyThreshold(Number(e.target.value))}
+                      onChange={(e) =>
+                        setEmptyThreshold(Number(e.target.value))
+                      }
                       className="wizard-slider empty-slider"
                     />
                     <span className="slider-hint">
-                      Percentage limit below which a dustbin is cataloged as officially emptied.
+                      Percentage limit below which a dustbin is cataloged as
+                      officially emptied.
                     </span>
                   </div>
 
@@ -238,7 +259,8 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
                       className="wizard-slider full-slider"
                     />
                     <span className="slider-hint">
-                      Capacity limit at or above which an alert or sweep notification is dispatched.
+                      Capacity limit at or above which an alert or sweep
+                      notification is dispatched.
                     </span>
                   </div>
                 </div>
@@ -251,13 +273,17 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
                         className="bin-marker full-marker"
                         style={{ bottom: `${fullThreshold}%` }}
                       >
-                        <span className="marker-lbl">Full ({fullThreshold}%)</span>
+                        <span className="marker-lbl">
+                          Full ({fullThreshold}%)
+                        </span>
                       </div>
                       <div
                         className="bin-marker empty-marker"
                         style={{ bottom: `${emptyThreshold}%` }}
                       >
-                        <span className="marker-lbl">Empty ({emptyThreshold}%)</span>
+                        <span className="marker-lbl">
+                          Empty ({emptyThreshold}%)
+                        </span>
                       </div>
                     </div>
                     <div
@@ -278,7 +304,9 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
               {!validateThresholds() && (
                 <div className="wizard-alert-banner">
                   <ShieldAlert size={16} />
-                  <span>EMPTY limit must be lower than FULL capacity limit.</span>
+                  <span>
+                    EMPTY limit must be lower than FULL capacity limit.
+                  </span>
                 </div>
               )}
             </div>
@@ -286,9 +314,12 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
 
           {step === 3 && (
             <div className="wizard-step wizard-step-backups">
-              <h3 className="wizard-headline">Configure Persistence & Backup Path</h3>
+              <h3 className="wizard-headline">
+                Configure Persistence & Backup Path
+              </h3>
               <p className="wizard-desc">
-                Setup a destination directory on the host machine for active hot backups.
+                Setup a destination directory on the host machine for active hot
+                backups.
               </p>
 
               <div className="form-group">
@@ -312,16 +343,17 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
                   </button>
                 </div>
                 <span className="slider-hint">
-                  Specify the absolute path where SQLite point-in-time backup snapshots will be persisted.
+                  Specify the absolute path where SQLite point-in-time backup
+                  snapshots will be persisted.
                 </span>
               </div>
 
               <div className="backup-explanation-card">
                 <HardDrive size={18} />
                 <div className="explanation-text">
-                  <strong>SQLite Hot-Backup Utility:</strong> BinThere copies standard transaction logs
-                  dynamically without blocking active database writes, ensuring complete historical
-                  persistence.
+                  <strong>SQLite Hot-Backup Utility:</strong> BinThere copies
+                  standard transaction logs dynamically without blocking active
+                  database writes, ensuring complete historical persistence.
                 </div>
               </div>
             </div>
@@ -332,7 +364,8 @@ export default function SetupWizard({ isOpen, token, onComplete, onClose }) {
               <div className="wizard-icon-hero confirmation-icon">⚡</div>
               <h3 className="wizard-headline">Ready for Deployment!</h3>
               <p className="wizard-desc">
-                Double check these baseline configuration targets before saving the server's environment.
+                Double check these baseline configuration targets before saving
+                the server's environment.
               </p>
 
               <div className="wizard-summary-card">

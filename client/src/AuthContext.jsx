@@ -22,9 +22,6 @@ import {
 import toast from "react-hot-toast";
 import { API_URL } from "./utils/constants.js";
 
-
-
-
 /** @type {React.Context<AuthContextValue>} */
 const AuthContext = createContext(null);
 

@@ -42,9 +42,10 @@ export default function AnalyticsSection({ binId, refreshKey, token }) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const endpoint = binId === "fleet"
-        ? `${API_URL}/api/analytics/fleet-fill-cycles?range=${range}`
-        : `${API_URL}/api/bins/${binId}/analytics?range=${range}`;
+      const endpoint =
+        binId === "fleet"
+          ? `${API_URL}/api/analytics/fleet-fill-cycles?range=${range}`
+          : `${API_URL}/api/bins/${binId}/analytics?range=${range}`;
 
       const res = await fetch(endpoint, { headers: authHeaders(token) });
       const json = await res.json();
@@ -151,7 +152,9 @@ export default function AnalyticsSection({ binId, refreshKey, token }) {
         <div>
           <h2 className="analytics-title">Garbage Collection Analytics</h2>
           <p className="analytics-sub">
-            {binId === "fleet" ? "Overall fleet fill cycles per compartment" : "Today's fill count per compartment"}
+            {binId === "fleet"
+              ? "Overall fleet fill cycles per compartment"
+              : "Today's fill count per compartment"}
           </p>
         </div>
         <button

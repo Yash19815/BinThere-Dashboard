@@ -9,7 +9,13 @@ import myLogo from "../../assets/logo.png";
  * Application header bar containing the logo, WebSocket status indicator,
  * notification bell with dropdown, and a profile menu.
  */
-export default function Header({ bins, wsStatus, user, onLogout, onOpenAdminSettings }) {
+export default function Header({
+  bins,
+  wsStatus,
+  user,
+  onLogout,
+  onOpenAdminSettings,
+}) {
   const [showNotif, setShowNotif] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
@@ -40,11 +46,7 @@ export default function Header({ bins, wsStatus, user, onLogout, onOpenAdminSett
   return (
     <header className="app-header">
       <div className="header-logo">
-        <img
-          className="logo-icon"
-          src={myLogo} 
-          alt="BinThere Logo"
-        />
+        <img className="logo-icon" src={myLogo} alt="BinThere Logo" />
       </div>
 
       <div className="header-actions">

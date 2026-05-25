@@ -2,7 +2,8 @@
 
 | Version  | Date       | Type           | Summary                                                                                              |
 | -------- | ---------- | -------------- | ---------------------------------------------------------------------------------------------------- |
-| v2.14.1  | 2026-05-19 | 📝 Docs        | Added system connection architecture flowcharts and serial monitor authentication sequence diagrams |
+| v2.14.2  | 2026-05-25 | 🔒 Security    | Removed obsolete electron-rebuild dependency and secured exceljs transitive dependencies             |
+| v2.14.1  | 2026-05-19 | 📝 Docs        | Added system connection architecture flowcharts and serial monitor authentication sequence diagrams  |
 | v2.14.0  | 2026-05-17 | ✨ Feature     | Shipped Setup Wizard, Backup Control Layer, native folder browsing, and host directory picker bypass |
 | v2.13.10 | 2026-05-15 | 🔧 Fix         | Synchronized schema.sql with server.js adding missing users table, indexes, and correct bin height   |
 | v2.13.9  | 2026-05-14 | 📝 Docs        | Expanded and standardized documentation across all sub-components                                    |
@@ -50,6 +51,21 @@
 All notable changes to the BinThere Dashboard are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
+
+## [v2.14.2] — 2026-05-25
+
+### Summary
+
+Secured the application's dependencies by conducting a thorough security audit. Removed the obsolete and highly vulnerable `electron-rebuild` devDependency in favor of the modern `@electron/rebuild`, reducing the dependency tree by 295 packages and completely resolving 8 root vulnerabilities. Applied dependency overrides to resolve the remaining transitive `uuid` vulnerability in the server.
+
+### Fixed
+
+- **Root Vulnerabilities**: Removed obsolete devDependency `electron-rebuild` which used highly vulnerable legacy versions of `request` and `tar`.
+- **Transitive Server Vulnerability**: Added package `overrides` in `server/package.json` to enforce `uuid` at version `^11.1.1` to resolve a vulnerability in the `exceljs` tree.
+
+### Changed
+
+- **Package Optimization**: Upgraded `package.json` with dependency cleanups, dropping 295 vulnerable packages and resolving all 8 root-level and 6 server-level security alerts.
 
 ## [v2.14.1] — 2026-05-19
 
