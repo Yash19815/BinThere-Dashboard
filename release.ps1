@@ -214,21 +214,30 @@ Write-Host ""
 # ── [5/7] Clean old build artefacts ───────────────────────────────────────────
 Write-Host "[5/7] Cleaning old build directories..." -ForegroundColor Yellow
 
-# Kill any existing processes that might lock files in dist-electron
+# Kill any existing processes that might lock files in dist-electron or native modules
 Write-Host "  Terminating existing app processes..." -ForegroundColor DarkGray
 $OldErrorActionPreference = $ErrorActionPreference
 $ErrorActionPreference = "SilentlyContinue"
 taskkill /F /IM BinThere.exe /T 2>$null | Out-Null
+taskkill /F /IM electron.exe /T 2>$null | Out-Null
 taskkill /F /IM node.exe /FI "WINDOWTITLE eq BinThere*" /T 2>$null | Out-Null
 $ErrorActionPreference = $OldErrorActionPreference
 # Small pause to let OS release file handles
 Start-Sleep -Seconds 2
 
 if (Test-Path "dist-electron") { Remove-Item -Recurse -Force "dist-electron" }
-
 if (Test-Path "client\dist")   { Remove-Item -Recurse -Force "client\dist" }
 
-Write-Host "  [OK] dist-electron/ and client/dist/ removed." -ForegroundColor Green
+# Clean better-sqlite3 build directory to avoid EPERM on rebuild
+if (Test-Path "server\node_modules\better-sqlite3\build") {
+    try {
+        Remove-Item -Recurse -Force "server\node_modules\better-sqlite3\build" -ErrorAction Stop
+    } catch {
+        Write-Host "  [!] WARNING: Could not delete better-sqlite3 build cache. A node process might be locking it. Try closing any running dev servers." -ForegroundColor Yellow
+    }
+}
+
+Write-Host "  [OK] Build directories cleaned." -ForegroundColor Green
 Write-Host ""
 
 # ── [6/7] Build: frontend → rebuild native modules → electron-builder ──────────

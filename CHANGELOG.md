@@ -74,6 +74,7 @@ Enhanced the `test-sensor.ps1` dual-sensor simulation script to support interact
 ### Fixed
 
 - **PowerShell String Interpolation** (`test-sensor.ps1`): Fixed a parser error where a colon followed a variable reference without explicit delimiter braces.
+- **EPERM Build Error** (`release.ps1`): Added process termination for `electron.exe` and a pre-build cleanup step for the `better-sqlite3` build directory to prevent file locking issues during native module rebuilds.
 
 ## [v2.14.3] — 2026-05-25
 
