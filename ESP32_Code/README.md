@@ -41,5 +41,10 @@ Based on the `config.h` file, here is the explicit pin mapping and power budget 
 Once initially flashed via USB, subsequent updates can be done wirelessly:
 
 - Navigate to `http://<ESP32-IP>/update` in your browser.
-- Upload the compiled `.bin` file.
-- **Authentication:** Use the credentials defined in `config.h` (Default: `binthere_admin` / `change_me_before_use`).
+- Upload the compiled `.bin` firmware file.
+- **Authentication Note**: By default, local prototyping firmware runs without ElegantOTA authentication. 
+- **Security Action Required**: For production or shared environments, you must secure the `/update` portal. Enable authentication in `binthere_final_pipeline.ino` by calling:
+  ```cpp
+  ElegantOTA.begin(&webSerial);
+  ElegantOTA.setAuth("your_username", "your_password"); // Add this line to enforce basic auth
+  ```

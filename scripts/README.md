@@ -10,11 +10,13 @@ The primary initialization script. It automates the environment setup process ac
 
 **Workflow:**
 
-1. **Host Detection:** Dynamically detects the host machine's active local IP address (e.g., `192.168.1.5`) on the local network.
-2. **Backend Config:** Scaffolds a `.env` file in the `server/` directory. It automatically generates a secure, randomized `JWT_SECRET` and provisions hardware API keys.
-3. **Frontend Config:** Generates a matching `.env` file in the `client/` directory, exposing the network IP via `VITE_API_URL` and `VITE_WS_URL`. This guarantees that mobile devices and ESP32s on the same Wi-Fi network can seamlessly communicate with the backend.
+1. **Bootstrap Dependencies**: Executes `npm install` concurrently in the monorepo root, frontend `client/`, and backend `server/` subdirectories.
+2. **Backend Environment Provisioning**: Copies `server/.env.example` to `server/.env` (if not already present), automatically generating a secure, randomized cryptographically-strong `JWT_SECRET`.
+3. **Frontend Environment Provisioning**: Copies `client/.env.example` to `client/.env`. By default, this uses `localhost`. 
+4. **Network Exposure (Optional)**: If you intend to connect remote ESP32s or mobile devices, you should manually update `VITE_API_URL` and `VITE_WS_URL` in `client/.env` (and `config.h` for the ESP32) with your machine's active local network IP address (e.g., `192.168.1.5`).
 
 **Usage:**
+
 This script is automatically executed when you run the global configuration command from the project root:
 
 ```bash

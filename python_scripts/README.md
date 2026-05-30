@@ -27,21 +27,26 @@ This directory contains the Python scripts forming the "Master Brain" of the Bin
 
 2. **Install Dependencies:**
 
+   First install core packages via requirements:
    ```bash
    pip install -r requirements.txt
    ```
 
-   _(Installs `fastapi`, `uvicorn`, `opencv-python`, `boto3`, `requests`, etc.)_
+   > [!IMPORTANT]
+   > **Hardware & Driver Packages**: Depending on your host platform (e.g. Raspberry Pi Zero 2W vs. a dev PC), you must manually install platform packages:
+   > - **Camera Support**: `pip install opencv-python` (required by `cv2` imports)
+   > - **Serial communication**: `pip install pyserial` (required by `serial` imports)
+   > - **GPIO Access (Raspberry Pi only)**: `pip install RPi.GPIO` (required by `RPi.GPIO` imports)
 
-3. **AWS Configuration:**
-   To leverage AWS Bedrock, your host machine must be configured with valid AWS credentials.
-   ```bash
-   aws configure
+3. **Cloud Endpoint Configuration:**
+   Create a `.env` file in this directory and populate:
+   ```env
+   CLOUD_API_URL=http://<server-ip>:8000/analyze
    ```
-   Ensure the IAM user has `bedrock:InvokeModel` permissions.
+   If testing with external Cloud API, ensure valid credentials are configured on your host (e.g. via `aws configure` if your API delegates to AWS Bedrock).
 
 ## Scripts Overview
 
-- `binthere_master.py`: The core pipeline. Hooks into local motion detectors, triggers OpenCV, routes the image to AWS Bedrock for classification, and pushes the result to the backend.
-- `local_server.py`: A local FastAPI mock server. Used for simulating and testing classification endpoints without physical hardware.
-- `send_images.py`: A testing utility to manually upload local image datasets to the model for calibration and testing.
+- `binthere_master.py`: The core edge pipeline running on the Raspberry Pi. Reads motion on BCM GPIO 17, commands ESP32 over UART, triggers OpenCV for camera burst, and pushes images to `CLOUD_API_URL` for waste classification.
+- `local_server.py`: A local FastAPI mock server. Simulates classification endpoints. Note: For local testing with `binthere_master.py`, ensure data schemas match (e.g., parameter `moisture_data` vs `soil_moisture`, and returned JSON containing `classification`).
+- `send_images.py`: A multithreaded testing utility to manually upload local images in the script directory to the ML classifier endpoint for calibration.

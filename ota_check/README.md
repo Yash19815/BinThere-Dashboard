@@ -14,13 +14,14 @@ OTA updates allow you to push new C++ firmware to the ESP32 over Wi-Fi without n
 ## Security & Authentication
 
 > [!CAUTION]
-> **Secure Your Endpoints:** The `/update` endpoint is protected with HTTP Basic Auth to prevent unauthorized users on the network from bricking the device or flashing malicious firmware.
+> **Secure Your Endpoints:** By default, the development firmware runs without authentication. For production or untrusted environments, you MUST secure the `/update` endpoint using HTTP Basic Auth to prevent unauthorized users from flashing malicious firmware or bricking the device.
 
-- When prompted by the browser, enter the username and password defined in the `ESP32_Code/config.h` file.
-- **Default Developer Credentials:**
-  - Username: `binthere_admin`
-  - Password: `change_me_before_use`
-- **Mandatory Action:** You MUST change these default credentials in `config.h` before deploying the ESP32 to any production or untrusted network environment.
+- Enable authentication in `ESP32_Code/binthere_final_pipeline.ino` by calling:
+  ```cpp
+  ElegantOTA.begin(&webSerial);
+  ElegantOTA.setAuth("your_username", "your_password"); // Enforce Basic Auth
+  ```
+- **Recommended Credentials**: Do not leave credentials at defaults (e.g. `admin`/`admin123`). Ensure you define unique, strong values before deployment.
 
 ## Included Files
 

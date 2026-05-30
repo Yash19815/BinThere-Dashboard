@@ -1,7 +1,7 @@
 # BinThere — Smart Waste Intelligence Dashboard
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-yellow.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Version](https://img.shields.io/badge/Version-2.14.4-orange)](package.json)
+[![Version](https://img.shields.io/badge/Version-2.14.5-orange)](package.json)
 [![Node.js](https://img.shields.io/badge/Node.js-v18+-green)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18-blue)](https://react.dev/)
 [![ESP32](https://img.shields.io/badge/Hardware-ESP32-red)](https://www.espressif.com/)
@@ -266,14 +266,20 @@ Requires `Authorization: Bearer <token>` or `X-Device-Key: <key>`.
 | `GET`    | `/api/bins`                    | Retrieve all bins & current states        |
 | `GET`    | `/api/bins/:id`                | Single bin details + measurement history  |
 | `GET`    | `/api/bins/:id/analytics`      | Daily fill-cycle trend data               |
+| `GET`    | `/api/bins/:id/heatmap`        | 24x7 hourly/daily fill density matrix     |
 | `POST`   | `/api/bins`                    | Register a new dustbin (Admin)            |
 | `PATCH`  | `/api/bins/:id`                | Update bin metadata (e.g., location)      |
 | `DELETE` | `/api/bins/:id`                | Remove a bin and cascade delete data      |
 | `POST`   | `/api/bins/:id/measurement`    | Record per-compartment reading            |
 | `GET`    | `/api/analytics/utilization`   | Real-time 24h fleet utilization score     |
 | `GET`    | `/api/analytics/fleet-history` | 7-day fleet-wide utilization trends       |
+| `GET`    | `/api/analytics/fleet-fill-cycles` | Aggregated fleet-wide fill cycles        |
 | `GET`    | `/api/export/metadata`         | Export availability & date range metadata |
 | `GET`    | `/api/export/excel`            | Multi-sheet data export (IST)             |
+| `GET`    | `/api/config/status`           | Retrieve dynamic limits (Admin)           |
+| `POST`   | `/api/config/save`             | Save dynamic threshold variables (Admin)  |
+| `POST`   | `/api/admin/backup`            | Trigger database snapshot backup (Admin)  |
+| `GET`    | `/api/admin/select-directory`  | Windows directory picker dialog (Admin)   |
 
 ---
 

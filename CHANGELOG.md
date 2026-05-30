@@ -2,6 +2,7 @@
 
 | Version  | Date       | Type           | Summary                                                                                              |
 | -------- | ---------- | -------------- | ---------------------------------------------------------------------------------------------------- |
+| v2.14.5  | 2026-05-30 | 📝 Docs        | Synchronized and corrected code-mismatches and security gaps across all project README files        |
 | v2.14.4  | 2026-05-30 | ✨ Feature     | Interactive multi-dustbin simulation in test-sensor.ps1 with separate random values                  |
 | v2.14.3  | 2026-05-25 | 🔧 Fix         | Reverted Electron to compatible v30.5.1 and resolved Windows production icon path resolution issues |
 | v2.14.2  | 2026-05-25 | 🔒 Security    | Removed obsolete electron-rebuild dependency and secured exceljs transitive dependencies             |
@@ -53,6 +54,20 @@
 All notable changes to the BinThere Dashboard are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
+
+## [v2.14.5] — 2026-05-30
+
+### Summary
+
+Conducted a full repository documentation audit and resolved several critical code-documentation mismatches, security representation gaps, and dynamic configuration discrepancies across all subdirectory README files.
+
+### Changed
+
+- **Security & OTA Corrections** (`ESP32_Code/README.md` & `ota_check/README.md`): Clarified that the default prototyping ElegantOTA firmware runs without active authentication by default, removing stale claims of pre-seeded basic credentials in `config.h` and detailing instructions to invoke `ElegantOTA.setAuth()` for high-risk deployments.
+- **Python Edge ML Dependencies** (`python_scripts/README.md`): Added explicit instructions to manually bootstrap platform-specific packages (`opencv-python`, `pyserial`, and `RPi.GPIO` for Raspberry Pi) that are omitted from `requirements.txt`.
+- **FastAPI Mock Server Schema Parity** (`python_scripts/README.md`): Documented parameter name discrepancies (`soil_moisture` vs `moisture_data`), camera frame field names (`images` vs `image`), and missing JSON `classification` return keys.
+- **Dynamic IP Resolution Guidelines** (`scripts/README.md`): Corrected workflow details for `setup.cjs` to state that dynamic active local network IP matching is not automated and requires manual input inside `.env`.
+- **Omitted Route Declarations** (`README.md`): Integrated 6 previously undocumented active Express server endpoints (`/api/analytics/fleet-fill-cycles`, `/api/bins/:id/heatmap`, backup controls, and administrative thresholds config routes) into the Protected API Reference table.
 
 ## [v2.14.4] — 2026-05-30
 
