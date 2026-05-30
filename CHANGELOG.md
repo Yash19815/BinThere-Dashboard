@@ -2,6 +2,7 @@
 
 | Version  | Date       | Type           | Summary                                                                                              |
 | -------- | ---------- | -------------- | ---------------------------------------------------------------------------------------------------- |
+| v2.14.4  | 2026-05-30 | ✨ Feature     | Interactive multi-dustbin simulation in test-sensor.ps1 with separate random values                  |
 | v2.14.3  | 2026-05-25 | 🔧 Fix         | Reverted Electron to compatible v30.5.1 and resolved Windows production icon path resolution issues |
 | v2.14.2  | 2026-05-25 | 🔒 Security    | Removed obsolete electron-rebuild dependency and secured exceljs transitive dependencies             |
 | v2.14.1  | 2026-05-19 | 📝 Docs        | Added system connection architecture flowcharts and serial monitor authentication sequence diagrams  |
@@ -52,6 +53,27 @@
 All notable changes to the BinThere Dashboard are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
+
+## [v2.14.4] — 2026-05-30
+
+### Summary
+
+Enhanced the `test-sensor.ps1` dual-sensor simulation script to support interactive multi-dustbin generation, allowing developers to simulate real-time updates for multiple containers with distinct random values concurrently.
+
+### Added
+
+- **Interactive Multi-Bin Mode** (`test-sensor.ps1`): Prompts the user to specify the target count of dustbins, collects their respective numeric IDs, and sends unique random sensor updates for each.
+- **Array Parameter Input**: Supported calling the script with an array parameter `-BinIds 1,2,3` to quickly start multi-sensor streams.
+- **Configurable Sleep Interval**: Added `-Interval` parameter to control the sleep duration between simulated measurement loops, defaulting to a highly responsive `1.0s` (down from `3.0s`).
+- **Interactive Bin Emptying Script** (`empty-bins.ps1`): Created a new simulation utility using the same interactive prompting and array parameter logic as `test-sensor.ps1` to instantly empty specific dustbins (sending 0% fill level to both compartments).
+
+### Changed
+
+- **Telemetry Output Formatting**: Overhauled console telemetry logging to distinguish individual dustbin readings in a multi-bin simulation environment.
+
+### Fixed
+
+- **PowerShell String Interpolation** (`test-sensor.ps1`): Fixed a parser error where a colon followed a variable reference without explicit delimiter braces.
 
 ## [v2.14.3] — 2026-05-25
 

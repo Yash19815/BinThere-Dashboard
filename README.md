@@ -1,7 +1,7 @@
 # BinThere — Smart Waste Intelligence Dashboard
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-yellow.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Version](https://img.shields.io/badge/Version-2.14.3-orange)](package.json)
+[![Version](https://img.shields.io/badge/Version-2.14.4-orange)](package.json)
 [![Node.js](https://img.shields.io/badge/Node.js-v18+-green)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18-blue)](https://react.dev/)
 [![ESP32](https://img.shields.io/badge/Hardware-ESP32-red)](https://www.espressif.com/)
@@ -154,7 +154,8 @@ Bintethere-Final/
 ├── build.ps1                 ← Local desktop executable compiler
 ├── release.ps1               ← Automated GitHub Release & git sync pipeline
 ├── upload.ps1                ← Standalone artifact uploader
-└── test-sensor.ps1           ← Hardware simulation utility
+├── test-sensor.ps1           ← Hardware simulation utility
+└── empty-bins.ps1            ← Hardware simulation emptying utility
 
 ```
 
@@ -356,10 +357,22 @@ flowchart TD
 ## 🧪 Simulation & Testing
 
 **Simulate Hardware (PowerShell)**:
-Run the interactive simulation script to push randomized measurements to the dashboard. It will automatically detect authentication keys and you can specify a target bin:
+Run the interactive simulation script to push randomized measurements to the dashboard. It will automatically detect authentication keys and you can specify one or more target bins:
 
 ```powershell
-.\test-sensor.ps1 -BinId 1
+.\test-sensor.ps1 -BinIds 1,2,3
+# Or run interactively by leaving parameters empty:
+.\test-sensor.ps1
+
+```
+
+**Empty Bins Simulation (PowerShell)**:
+Run the interactive emptying script to reset the fill level of specific dustbins to 0% in the database and dashboard:
+
+```powershell
+.\empty-bins.ps1 -BinIds 1,2,3
+# Or run interactively by leaving parameters empty:
+.\empty-bins.ps1
 
 ```
 

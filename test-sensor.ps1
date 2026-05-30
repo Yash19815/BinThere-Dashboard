@@ -1,5 +1,6 @@
 param (
-    [string]$BinId
+    [int[]]$BinIds,
+    [double]$Interval = 1.0
 )
 
 # =============================================================================
@@ -13,7 +14,7 @@ param (
 #
 # USAGE:
 #   .\test-sensor.ps1
-#   .\test-sensor.ps1 -BinId 3
+#   .\test-sensor.ps1 -BinIds 1,2,3
 #   (Press Ctrl+C to stop)
 #
 # PREREQUISITES:
@@ -32,21 +33,47 @@ param (
 #     distance=25 cm -> 0 % full     (Sensor sees bin floor = Empty)
 #
 # OUTPUT:
-#   [HH:mm:ss] Dry: <dist> cm (<fill>%)  |  Wet: <dist> cm (<fill>%)
+#   [HH:mm:ss] Bin #001 | Dry: <dist> cm (<fill>%)  |  Wet: <dist> cm (<fill>%)
 #
 # =============================================================================
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Continue"
 
-# Prompt for bin ID when not provided or invalid, and enforce numeric input only.
-$binIdInput = $BinId
-while ($true) {
-    if ($binIdInput -match "^\d+$") {
-        $BinId = [int]$binIdInput
-        break
+$activeBinIds = @()
+
+if (($BinIds) -and ($BinIds.Count -gt 0)) {
+    foreach ($id in $BinIds) {
+        if ($id -match "^\d+$") {
+            $activeBinIds += [int]$id
+        }
     }
-    $binIdInput = Read-Host "Enter bin ID (numbers only)"
+}
+
+if ($activeBinIds.Count -eq 0) {
+    # Ask how many dustbins the user wants to send values to
+    $countInput = ""
+    while ($true) {
+        $countInput = Read-Host "How many dustbins do you want to send values to?"
+        if (($countInput -match "^\d+$") -and ([int]$countInput -gt 0)) {
+            $binCount = [int]$countInput
+            break
+        }
+        Write-Warning "[WARN] Please enter a valid positive number."
+    }
+
+    # Ask for the IDs of the dustbins in respective manner
+    for ($i = 1; $i -le $binCount; $i++) {
+        $binIdInput = ""
+        while ($true) {
+            $binIdInput = Read-Host "Enter ID for Dustbin #$i"
+            if ($binIdInput -match "^\d+$") {
+                $activeBinIds += [int]$binIdInput
+                break
+            }
+            Write-Warning "[WARN] Please enter a numeric ID only."
+        }
+    }
 }
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -62,47 +89,51 @@ if ((Test-Path $EnvPath)) {
     }
 }
 
-# Backend API endpoint for measurement data
-$baseUrl = "http://localhost:3001/api/bins/$BinId/measurement"
-
-Write-Host "Starting dual-sensor simulation for Dustbin #$( '{0:D3}' -f $BinId )..." -ForegroundColor Green
+# Build the display string of active bins
+$binsDisplay = ($activeBinIds | ForEach-Object { '#{0:D3}' -f $_ }) -join ", "
+Write-Host "Starting dual-sensor simulation for Dustbins: $binsDisplay..." -ForegroundColor Green
 if (-not $DeviceKey) { Write-Warning "[WARN] No DEVICE_API_KEY found in server/.env. Auth might fail." }
 Write-Host "Press Ctrl+C to stop`n" -ForegroundColor Yellow
 
 while ($true) {
-    # Generate random distances in the 0-25 cm range (bin height = 25cm)
-    # 0 cm = sensor touching waste = 100% full
-    # 25 cm = sensor sees bin floor = 0% full (empty)
-    $sensor1 = [math]::Round((Get-Random -Minimum 0.0 -Maximum 25.0), 2)
-    $sensor2 = [math]::Round((Get-Random -Minimum 0.0 -Maximum 25.0), 2)
+    foreach ($BinId in $activeBinIds) {
+        # Generate random distances in the 0-25 cm range (bin height = 25cm)
+        # 0 cm = sensor touching waste = 100% full
+        # 25 cm = sensor sees bin floor = 0% full (empty)
+        $sensor1 = [math]::Round((Get-Random -Minimum 0.0 -Maximum 25.0), 2)
+        $sensor2 = [math]::Round((Get-Random -Minimum 0.0 -Maximum 25.0), 2)
 
-    $headers = @{}
-    if ($DeviceKey) {
-        $headers["X-Device-Key"] = $DeviceKey
-    }
-
-    try {
-        # Dry Compartment
-        $bodyDry = @{ compartment = "dry"; raw_distance_cm = $sensor1 } | ConvertTo-Json -Depth 10
-        $resDry = Invoke-RestMethod -Uri $baseUrl -Method POST -Body $bodyDry -ContentType "application/json" -Headers $headers
-
-        # Wet Compartment
-        $bodyWet = @{ compartment = "wet"; raw_distance_cm = $sensor2 } | ConvertTo-Json -Depth 10
-        $resWet = Invoke-RestMethod -Uri $baseUrl -Method POST -Body $bodyWet -ContentType "application/json" -Headers $headers
-
-        $ts = Get-Date -Format "HH:mm:ss"
-        if (($resDry) -and ($resWet)) {
-            $dryFill = $resDry.data.fill_level_percent
-            $wetFill = $resWet.data.fill_level_percent
-            # Print a timestamped summary line
-            Write-Host "[$ts] Dry: ${sensor1} cm ($dryFill%)  |  Wet: ${sensor2} cm ($wetFill%)" -ForegroundColor Cyan
+        $headers = @{}
+        if ($DeviceKey) {
+            $headers["X-Device-Key"] = $DeviceKey
         }
-    }
-    catch {
-        # Server unreachable or returned an error - display the reason and keep retrying
-        Write-Warning "Error: $_"
+
+        $baseUrl = "http://localhost:3001/api/bins/$BinId/measurement"
+
+        try {
+            # Dry Compartment
+            $bodyDry = @{ compartment = "dry"; raw_distance_cm = $sensor1 } | ConvertTo-Json -Depth 10
+            $resDry = Invoke-RestMethod -Uri $baseUrl -Method POST -Body $bodyDry -ContentType "application/json" -Headers $headers
+
+            # Wet Compartment
+            $bodyWet = @{ compartment = "wet"; raw_distance_cm = $sensor2 } | ConvertTo-Json -Depth 10
+            $resWet = Invoke-RestMethod -Uri $baseUrl -Method POST -Body $bodyWet -ContentType "application/json" -Headers $headers
+
+            $ts = Get-Date -Format "HH:mm:ss"
+            if (($resDry) -and ($resWet)) {
+                $dryFill = $resDry.data.fill_level_percent
+                $wetFill = $resWet.data.fill_level_percent
+                $formattedBinId = '{0:D3}' -f $BinId
+                # Print a timestamped summary line for this specific bin
+                Write-Host "[$ts] Bin #$formattedBinId | Dry: ${sensor1} cm ($dryFill%)  |  Wet: ${sensor2} cm ($wetFill%)" -ForegroundColor Cyan
+            }
+        }
+        catch {
+            # Server unreachable or returned an error
+            Write-Warning "[!] Error for Bin #${BinId}: $_"
+        }
     }
 
     # Wait before the next simulated reading cycle
-    Start-Sleep -Seconds 3
+    Start-Sleep -Seconds $Interval
 }
