@@ -96,7 +96,14 @@ export function useBins(token) {
       setBins((prev) =>
         prev.map((b) =>
           b.id === binId
-            ? { ...b, location: json.bin.location, zone_id: json.bin.zone_id ?? b.zone_id, zone_name: json.bin.zone_name ?? b.zone_name }
+            ? {
+                ...b,
+                location: json.bin.location,
+                // Use direct assignment so null (unassigned) clears the badge
+                // immediately without waiting for a WebSocket push.
+                zone_id: json.bin.zone_id,
+                zone_name: json.bin.zone_name,
+              }
             : b,
         ),
       );
