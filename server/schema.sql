@@ -8,11 +8,13 @@
 
 -- ── Bins ─────────────────────────────────────────────────────
 -- One row per physical dustbin unit.
+-- zone_id is a nullable FK to zones.id (added via ALTER TABLE migration in server.js)
 CREATE TABLE IF NOT EXISTS bins (
   id              INTEGER PRIMARY KEY,
   name            TEXT    NOT NULL,
   location        TEXT    NOT NULL,
-  max_height_cm   REAL    NOT NULL DEFAULT 25   -- empty-bin height (sensor to bottom)
+  max_height_cm   REAL    NOT NULL DEFAULT 25,  -- empty-bin height (sensor to bottom)
+  zone_id         INTEGER                       -- FK: zones.id, NULL = unassigned
 );
 
 -- Default bin (matches server seed; harmless to re-run)
@@ -67,3 +69,16 @@ CREATE INDEX IF NOT EXISTS idx_fill_cycles_bin_comp
 
 CREATE INDEX IF NOT EXISTS idx_fill_cycles_filled_at
   ON fill_cycles(filled_at);
+
+-- ── Zones ─────────────────────────────────────────────────────
+-- Named physical zones that group bins together (e.g. "Floor 1", "Canteen").
+CREATE TABLE IF NOT EXISTS zones (
+  id    INTEGER PRIMARY KEY AUTOINCREMENT,
+  name  TEXT    NOT NULL UNIQUE,
+  color TEXT    NOT NULL DEFAULT '#4f98a3'
+);
+
+-- zone_id is added to bins as a nullable FK after initial table creation
+-- (SQLite ALTER TABLE cannot add a column with FK inline on CREATE).
+-- Applied via: ALTER TABLE bins ADD COLUMN zone_id INTEGER
+-- with the zones.id column referenced logically (enforced in application layer).

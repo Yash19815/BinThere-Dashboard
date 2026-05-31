@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import "./App.css";
 import { useAuth } from "./AuthContext.jsx";
 import LoginPage from "./LoginPage.jsx";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, LayoutGrid, Map } from "lucide-react";
 import ExportToExcel from "./components/ExportToExcel";
 
 import Header from "./components/layout/Header";
@@ -10,16 +10,19 @@ import AnalyticsSection from "./components/dashboard/AnalyticsSection";
 import PeakHoursHeatmap from "./components/dashboard/PeakHoursHeatmap";
 import FleetUtilizationChart from "./components/dashboard/FleetUtilizationChart";
 import BinCard from "./components/dashboard/BinCard";
+import ZoneMapView from "./components/dashboard/ZoneMapView";
 import HistoryModal from "./components/modals/HistoryModal";
 import PromptModal from "./components/modals/PromptModal";
 import SetupWizard from "./components/modals/SetupWizard";
 import AdminSettingsModal from "./components/modals/AdminSettingsModal";
+import ZoneManagerModal from "./components/modals/ZoneManagerModal";
 
 import EmptyState from "./components/ui/EmptyState";
 import InlineError from "./components/ui/InlineError";
 import { BinCardSkeleton } from "./components/ui/Skeleton";
 
 import { useBins } from "./hooks/useBins";
+import { useZones } from "./hooks/useZones";
 import { API_URL, authHeaders } from "./utils/constants";
 
 export default function App() {
@@ -50,6 +53,11 @@ export default function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSetupOpen, setIsSetupOpen] = useState(false);
   const [isAdminSettingsOpen, setIsAdminSettingsOpen] = useState(false);
+  const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'zone'
+  const [isZoneManagerOpen, setIsZoneManagerOpen] = useState(false);
+
+  const { zones, createZone, updateZone, deleteZone, assignBinToZone, refreshZones } =
+    useZones(token);
 
   useEffect(() => {
     const checkConfigStatus = async () => {
@@ -198,6 +206,7 @@ export default function App() {
         user={user}
         onLogout={logout}
         onOpenAdminSettings={() => setIsAdminSettingsOpen(true)}
+        onOpenZoneManager={() => setIsZoneManagerOpen(true)}
       />
 
       <main className="main">
@@ -209,6 +218,28 @@ export default function App() {
             </p>
           </div>
           <div className="page-title-actions">
+            {/* Grid / Zone view toggle */}
+            <div className="view-toggle" role="group" aria-label="View mode">
+              <button
+                id="view-toggle-grid"
+                className={`view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+                onClick={() => setViewMode("grid")}
+                title="Grid View"
+              >
+                <LayoutGrid size={15} />
+                <span>Grid</span>
+              </button>
+              <button
+                id="view-toggle-zone"
+                className={`view-toggle-btn ${viewMode === "zone" ? "active" : ""}`}
+                onClick={() => setViewMode("zone")}
+                title="Zone View"
+              >
+                <Map size={15} />
+                <span>Zone</span>
+              </button>
+            </div>
+
             <button
               className={`refresh-btn ${isRefreshing ? "refreshing" : ""}`}
               onClick={handleRefresh}
@@ -291,24 +322,35 @@ export default function App() {
               </>
             )}
 
-            <div className="bin-grid">
-              {bins.map((bin) => (
-                <BinCard
-                  key={bin.id}
-                  binId={bin.id}
-                  binName={bin.name}
-                  binLocation={bin.location}
-                  dryPct={bin.dry?.fill_level_percent ?? null}
-                  wetPct={bin.wet?.fill_level_percent ?? null}
-                  dryRawDistance={bin.dry?.raw_distance_cm}
-                  wetRawDistance={bin.wet?.raw_distance_cm}
-                  dryUpdated={bin.dry?.last_updated}
-                  wetUpdated={bin.wet?.last_updated}
+            <div className={viewMode === "grid" ? "bin-grid" : ""}>
+              {viewMode === "grid" ? (
+                bins.map((bin) => (
+                  <BinCard
+                    key={bin.id}
+                    binId={bin.id}
+                    binName={bin.name}
+                    binLocation={bin.location}
+                    dryPct={bin.dry?.fill_level_percent ?? null}
+                    wetPct={bin.wet?.fill_level_percent ?? null}
+                    dryRawDistance={bin.dry?.raw_distance_cm}
+                    wetRawDistance={bin.wet?.raw_distance_cm}
+                    dryUpdated={bin.dry?.last_updated}
+                    wetUpdated={bin.wet?.last_updated}
+                    onBinClick={openDetail}
+                    onEditLocation={handleEditLocation}
+                    onDeleteBin={handleDeleteBin}
+                  />
+                ))
+              ) : (
+                <ZoneMapView
+                  bins={bins}
+                  zones={zones}
                   onBinClick={openDetail}
                   onEditLocation={handleEditLocation}
                   onDeleteBin={handleDeleteBin}
+                  onAssignZone={assignBinToZone}
                 />
-              ))}
+              )}
             </div>
           </>
         )}
@@ -351,6 +393,19 @@ export default function App() {
           refreshBins();
         }}
       />
+
+      {user?.role === "admin" && (
+        <ZoneManagerModal
+          isOpen={isZoneManagerOpen}
+          onClose={() => setIsZoneManagerOpen(false)}
+          zones={zones}
+          token={token}
+          onCreate={createZone}
+          onUpdate={updateZone}
+          onDelete={deleteZone}
+          onRefresh={refreshZones}
+        />
+      )}
     </div>
   );
 }

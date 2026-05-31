@@ -2,6 +2,7 @@
 
 | Version  | Date       | Type           | Summary                                                                                              |
 | -------- | ---------- | -------------- | ---------------------------------------------------------------------------------------------------- |
+| v2.15.0  | 2026-05-31 | ✨ Feature     | Zonal Mapping: group bins into named zones with collapsible zone view, zone manager modal, and CRUD API |
 | v2.14.5  | 2026-05-30 | 📝 Docs        | Synchronized and corrected code-mismatches and security gaps across all project README files        |
 | v2.14.4  | 2026-05-30 | ✨ Feature     | Interactive multi-dustbin simulation in test-sensor.ps1 with separate random values                  |
 | v2.14.3  | 2026-05-25 | 🔧 Fix         | Reverted Electron to compatible v30.5.1 and resolved Windows production icon path resolution issues |
@@ -54,6 +55,34 @@
 All notable changes to the BinThere Dashboard are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
+
+## [v2.15.0] — 2026-05-31
+
+### Summary
+
+Shipped the **Zonal Mapping** feature — admins can now group physical smart bins into named zones (e.g. "Floor 1", "Canteen", "Corridor B") and visualise the dashboard in a collapsible grouped layout instead of a flat grid.
+
+### Added
+
+- **`zones` DB table** (`server/server.js`, `server/schema.sql`): New `zones` table with `id`, `name`, and `color` columns. Idempotent `ALTER TABLE bins ADD COLUMN zone_id INTEGER` migration applied at startup via try/catch pattern.
+- **5 new API routes** (`server/server.js`):
+  - `GET /api/zones` — returns all zones with `bin_count` via LEFT JOIN
+  - `POST /api/zones` — create zone (admin only)
+  - `PUT /api/zones/:id` — update zone name/color (admin only)
+  - `DELETE /api/zones/:id` — delete zone, auto-unassigns all its bins (admin only)
+  - `PATCH /api/bins/:id/zone` — assign or unassign a bin to a zone
+- **`useZones` hook** (`client/src/hooks/useZones.js`): Custom React hook modelled after `useBins.js` — fetches on mount, exposes `zones`, `zonesLoading`, `createZone`, `updateZone`, `deleteZone`, `assignBinToZone`, `refreshZones`.
+- **`ZoneMapView` component** (`client/src/components/dashboard/ZoneMapView.jsx`): Replaces the flat `.bin-grid` in Zone View mode. Groups bins by zone with collapsible sections showing zone name, coloured dot, bin count badge, and average fill %. Each bin card includes a compact zone assignment `<select>` dropdown.
+- **`ZoneManagerModal` component** (`client/src/components/modals/ZoneManagerModal.jsx`): Admin-only glassmorphic modal for creating, editing (inline), and deleting zones with confirmation guard.
+- **Grid / Zone view toggle** (`client/src/App.jsx`): Segmented button group (`[Grid] [Zone]`) added to the page title action row. Grid view renders existing `.bin-grid` unchanged; Zone view renders `<ZoneMapView>`.
+- **"Manage Zones" menu entry** (`client/src/components/layout/Header.jsx`): Added to the admin profile dropdown, visible only to `role === 'admin'` users.
+- **Zone CSS** (`client/src/App.css`): ~400 lines of `zone-*` and `view-toggle*` prefixed styles appended, matching the existing dark glassmorphic design language.
+
+### Changed
+
+- **`rebuildFleetCache()`** (`server/server.js`): Now LEFT JOINs `zones` so every bin in the cache carries `zone_id` and `zone_name` — backward-compatible extension.
+- **`GET /api/bins`** implicitly returns `zone_id` and `zone_name` via the updated fleet cache.
+- **`patchFleetCache()`** simplified to always call `rebuildFleetCache()` to keep zone join data consistent.
 
 ## [v2.14.5] — 2026-05-30
 

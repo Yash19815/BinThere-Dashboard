@@ -121,6 +121,13 @@ db.exec(`
     created_at    TEXT    NOT NULL DEFAULT (datetime('now'))
   );
 
+  -- Zones table for grouping bins into named physical zones
+  CREATE TABLE IF NOT EXISTS zones (
+    id    INTEGER PRIMARY KEY AUTOINCREMENT,
+    name  TEXT    NOT NULL UNIQUE,
+    color TEXT    NOT NULL DEFAULT '#4f98a3'
+  );
+
   -- Performance indexes to prevent full table scans on high-frequency queries
   CREATE INDEX IF NOT EXISTS idx_measurements_bin_comp_ts
     ON measurements(bin_id, compartment, timestamp DESC);
@@ -131,6 +138,13 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_fill_cycles_filled_at
     ON fill_cycles(filled_at);
 `);
+
+// Idempotent migration: add zone_id column to bins if it doesn't exist yet
+try {
+  db.exec(`ALTER TABLE bins ADD COLUMN zone_id INTEGER`);
+} catch (e) {
+  // Column already exists — safe to ignore
+}
 
 /** Seed a default admin user on first startup. */
 const adminUsername = process.env.DEFAULT_ADMIN_USERNAME || "admin";
@@ -360,10 +374,17 @@ let fleetCache = null;
 
 /**
  * Rebuilds the fleet cache from the database.
+ * Also joins zones to include zone_id and zone_name per bin.
  * Called once at startup and after structural mutations (add/delete/edit bin).
  */
 function rebuildFleetCache() {
-  const bins = db.prepare("SELECT * FROM bins").all();
+  const bins = db
+    .prepare(
+      `SELECT b.*, z.name AS zone_name
+       FROM bins b
+       LEFT JOIN zones z ON b.zone_id = z.id`,
+    )
+    .all();
 
   const latestDry = db
     .prepare(
@@ -404,11 +425,8 @@ function patchFleetCache(binId) {
     rebuildFleetCache();
     return;
   }
-  const updated = getBinWithCompartments(binId);
-  if (!updated) return;
-  const idx = fleetCache.findIndex((b) => b.id === binId);
-  if (idx !== -1) fleetCache[idx] = updated;
-  else fleetCache.push(updated);
+  // Rebuild fully so zone join data stays consistent
+  rebuildFleetCache();
 }
 
 /** Returns the cached fleet state, rebuilding if necessary. */
@@ -1011,6 +1029,121 @@ app.get("/api/bins/:id/heatmap", requireAuth, (req, res) => {
 
 // Excel export routes
 app.use("/api", exportRoutes);
+
+// ── Zone Routes ──────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/zones
+ * Returns all zones with their bin count.
+ */
+app.get("/api/zones", requireAuth, (req, res) => {
+  const zones = db
+    .prepare(
+      `SELECT z.id, z.name, z.color, COUNT(b.id) AS bin_count
+       FROM zones z
+       LEFT JOIN bins b ON b.zone_id = z.id
+       GROUP BY z.id
+       ORDER BY z.name ASC`,
+    )
+    .all();
+  res.json({ status: "success", zones });
+});
+
+/**
+ * POST /api/zones
+ * Create a new zone.
+ * Body: { name, color? }
+ */
+app.post("/api/zones", requireAdmin, (req, res) => {
+  const { name, color = "#4f98a3" } = req.body;
+  if (!name || !name.trim())
+    return res.status(400).json({ status: "error", error: "Zone name is required" });
+
+  try {
+    const result = db
+      .prepare("INSERT INTO zones (name, color) VALUES (?, ?)")
+      .run(name.trim(), color.trim());
+    const zone = db.prepare("SELECT * FROM zones WHERE id = ?").get(result.lastInsertRowid);
+    res.status(201).json({ status: "success", zone });
+  } catch (e) {
+    if (e.message && e.message.includes("UNIQUE"))
+      return res.status(409).json({ status: "error", error: "Zone name already exists" });
+    res.status(500).json({ status: "error", error: e.message });
+  }
+});
+
+/**
+ * PUT /api/zones/:id
+ * Update zone name and/or color.
+ * Body: { name?, color? }
+ */
+app.put("/api/zones/:id", requireAdmin, (req, res) => {
+  const zoneId = parseInt(req.params.id, 10);
+  const existing = db.prepare("SELECT * FROM zones WHERE id = ?").get(zoneId);
+  if (!existing)
+    return res.status(404).json({ status: "error", error: "Zone not found" });
+
+  const name = req.body.name !== undefined ? req.body.name.trim() : existing.name;
+  const color = req.body.color !== undefined ? req.body.color.trim() : existing.color;
+
+  if (!name)
+    return res.status(400).json({ status: "error", error: "Zone name cannot be empty" });
+
+  try {
+    db.prepare("UPDATE zones SET name = ?, color = ? WHERE id = ?").run(name, color, zoneId);
+    rebuildFleetCache();
+    const zone = db.prepare("SELECT * FROM zones WHERE id = ?").get(zoneId);
+    res.json({ status: "success", zone });
+  } catch (e) {
+    if (e.message && e.message.includes("UNIQUE"))
+      return res.status(409).json({ status: "error", error: "Zone name already exists" });
+    res.status(500).json({ status: "error", error: e.message });
+  }
+});
+
+/**
+ * DELETE /api/zones/:id
+ * Delete a zone; unassigns all bins in that zone first.
+ */
+app.delete("/api/zones/:id", requireAdmin, (req, res) => {
+  const zoneId = parseInt(req.params.id, 10);
+  if (!db.prepare("SELECT 1 FROM zones WHERE id = ?").get(zoneId))
+    return res.status(404).json({ status: "error", error: "Zone not found" });
+
+  db.transaction(() => {
+    db.prepare("UPDATE bins SET zone_id = NULL WHERE zone_id = ?").run(zoneId);
+    db.prepare("DELETE FROM zones WHERE id = ?").run(zoneId);
+  })();
+
+  rebuildFleetCache();
+  res.json({ status: "success", message: "Zone deleted" });
+});
+
+/**
+ * PATCH /api/bins/:id/zone
+ * Assign or unassign a bin to a zone.
+ * Body: { zone_id } — pass null to unassign
+ */
+app.patch("/api/bins/:id/zone", requireAuth, (req, res) => {
+  const binId = parseInt(req.params.id, 10);
+  const { zone_id } = req.body;
+
+  if (!db.prepare("SELECT 1 FROM bins WHERE id = ?").get(binId))
+    return res.status(404).json({ status: "error", error: "Bin not found" });
+
+  if (zone_id !== null && zone_id !== undefined) {
+    if (!db.prepare("SELECT 1 FROM zones WHERE id = ?").get(zone_id))
+      return res.status(404).json({ status: "error", error: "Zone not found" });
+  }
+
+  db.prepare("UPDATE bins SET zone_id = ? WHERE id = ?").run(
+    zone_id ?? null,
+    binId,
+  );
+  rebuildFleetCache();
+  const updatedBin = fleetCache?.find((b) => b.id === binId);
+  res.json({ status: "success", bin: updatedBin });
+});
 
 app.get("/api/config/status", requireAdmin, (req, res) => {
   res.json({

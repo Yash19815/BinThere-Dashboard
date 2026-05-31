@@ -15,6 +15,7 @@ export default function Header({
   user,
   onLogout,
   onOpenAdminSettings,
+  onOpenZoneManager,
 }) {
   const [showNotif, setShowNotif] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -103,6 +104,20 @@ export default function Header({
                     }}
                   >
                     ⚙️ System Settings
+                  </button>
+                </div>
+              )}
+
+              {user?.role === "admin" && onOpenZoneManager && (
+                <div className="profile-action admin-settings-action">
+                  <button
+                    className="admin-settings-menu-btn"
+                    onClick={() => {
+                      setShowProfile(false);
+                      onOpenZoneManager();
+                    }}
+                  >
+                    🗺️ Manage Zones
                   </button>
                 </div>
               )}

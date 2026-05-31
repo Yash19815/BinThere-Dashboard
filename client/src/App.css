@@ -3778,3 +3778,396 @@ body {
     transform: translateY(0);
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────────── */
+/* ── Zonal Mapping Feature ─────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────────────────────────────────── */
+
+/* ── View-toggle segmented button ──────────────────────────────────────────── */
+
+.view-toggle {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.4rem 0.85rem;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #94a3b8;
+  transition: all 0.18s ease;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.view-toggle-btn:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.view-toggle-btn.active {
+  background: rgba(79, 152, 163, 0.18);
+  border-color: rgba(79, 152, 163, 0.35);
+  color: #4f98a3;
+  box-shadow: 0 2px 8px rgba(79, 152, 163, 0.15);
+}
+
+/* ── Zone map container ─────────────────────────────────────────────────────── */
+
+.zone-map-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+/* ── Zone section (collapsible group) ──────────────────────────────────────── */
+
+.zone-section {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.zone-section:hover {
+  border-color: rgba(255, 255, 255, 0.11);
+}
+
+/* ── Zone section header ────────────────────────────────────────────────────── */
+
+.zone-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  user-select: none;
+  transition: background 0.18s;
+  outline: none;
+}
+
+.zone-section-header:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.zone-section-header:focus-visible {
+  outline: 2px solid #4f98a3;
+  outline-offset: -2px;
+}
+
+.zone-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+/* ── Zone colour dot ────────────────────────────────────────────────────────── */
+
+.zone-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.zone-section-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: -0.01em;
+}
+
+/* ── Zone bin count badge ───────────────────────────────────────────────────── */
+
+.zone-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 100px;
+  background: rgba(79, 152, 163, 0.15);
+  border: 1px solid rgba(79, 152, 163, 0.25);
+  color: #4f98a3;
+  letter-spacing: 0.01em;
+}
+
+/* ── Zone average fill text ─────────────────────────────────────────────────── */
+
+.zone-avg-fill {
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ── Collapse chevron ───────────────────────────────────────────────────────── */
+
+.zone-collapse-chevron {
+  color: #64748b;
+  transition: transform 0.22s ease;
+  display: flex;
+  align-items: center;
+}
+
+.zone-collapse-chevron--collapsed {
+  transform: rotate(0deg);
+}
+
+/* ── Zone bins grid (mirrors .bin-grid) ─────────────────────────────────────── */
+
+.zone-bins-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+  padding: 1.25rem;
+}
+
+.zone-empty-hint {
+  font-size: 0.85rem;
+  color: #475569;
+  padding: 1rem 1.25rem;
+  font-style: italic;
+}
+
+/* ── Bin wrapper inside zone (stacks card + assignment row) ─────────────────── */
+
+.zone-bin-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ── Zone assignment select row ─────────────────────────────────────────────── */
+
+.zone-assign-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.25rem;
+}
+
+.zone-assign-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.zone-assign-select {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.6rem;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  outline: none;
+}
+
+.zone-assign-select:hover {
+  border-color: rgba(79, 152, 163, 0.4);
+}
+
+.zone-assign-select:focus {
+  border-color: #4f98a3;
+  box-shadow: 0 0 0 2px rgba(79, 152, 163, 0.15);
+}
+
+/* ── Zone manager modal ──────────────────────────────────────────────────────── */
+
+.zone-manager-modal {
+  max-width: 540px !important;
+}
+
+.zone-list-section,
+.zone-add-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.zone-list-empty {
+  font-size: 0.88rem;
+  color: #64748b;
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+
+/* ── Zone list ───────────────────────────────────────────────────────────────── */
+
+.zone-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ── Zone list row (normal + edit states) ─────────────────────────────────── */
+
+.zone-list-row {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 0.65rem 0.9rem;
+  transition: border-color 0.15s;
+}
+
+.zone-list-row:hover {
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+.zone-row-display {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.zone-row-name {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.zone-row-count {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-right: auto;
+}
+
+.zone-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Inline edit row */
+.zone-row-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.zone-name-input {
+  flex: 1;
+  min-width: 120px;
+  font-size: 0.85rem !important;
+  padding: 0.35rem 0.65rem !important;
+}
+
+.zone-row-edit-actions {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.zone-inline-error {
+  font-size: 0.75rem;
+  color: #f87171;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+/* ── Zone icon action buttons ───────────────────────────────────────────────── */
+
+.zone-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: #94a3b8;
+  transition: all 0.15s;
+}
+
+.zone-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.zone-icon-btn--danger {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.2);
+  background: rgba(248, 113, 113, 0.06);
+}
+
+.zone-icon-btn--danger:hover {
+  background: rgba(248, 113, 113, 0.14);
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.zone-icon-btn--save {
+  color: #34d399;
+  border-color: rgba(52, 211, 153, 0.2);
+  background: rgba(52, 211, 153, 0.06);
+}
+
+.zone-icon-btn--save:hover {
+  background: rgba(52, 211, 153, 0.14);
+}
+
+.zone-icon-btn--cancel {
+  color: #94a3b8;
+}
+
+/* ── Color picker input ──────────────────────────────────────────────────────── */
+
+.zone-color-picker {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 2px;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+
+.zone-color-picker:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Add zone form ───────────────────────────────────────────────────────────── */
+
+.zone-add-form {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.zone-add-btn {
+  display: flex !important;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem !important;
+  padding: 0.4rem 0.9rem !important;
+  white-space: nowrap;
+}
+
+.zone-add-error {
+  font-size: 0.8rem;
+  color: #f87171;
+  margin-top: 0.25rem;
+}
