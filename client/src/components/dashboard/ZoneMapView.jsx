@@ -139,30 +139,10 @@ export default function ZoneMapView({
                         onBinClick={onBinClick}
                         onEditLocation={onEditLocation}
                         onDeleteBin={onDeleteBin}
+                        zoneName={bin.zone_name ?? null}
+                        zones={zones}
+                        onAssignZone={onAssignZone}
                       />
-                      {/* Zone assignment dropdown */}
-                      <div className="zone-assign-row">
-                        <label className="zone-assign-label" htmlFor={`zone-assign-${bin.id}`}>
-                          Zone:
-                        </label>
-                        <select
-                          id={`zone-assign-${bin.id}`}
-                          className="zone-assign-select"
-                          value={bin.zone_id ?? ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            onAssignZone(bin.id, val === "" ? null : parseInt(val, 10));
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <option value="">— Unassigned —</option>
-                          {zones.map((z) => (
-                            <option key={z.id} value={z.id}>
-                              {z.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
                     </div>
                   ))
                 )}

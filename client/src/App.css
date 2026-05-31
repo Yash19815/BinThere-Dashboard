@@ -4171,3 +4171,62 @@ body {
   color: #f87171;
   margin-top: 0.25rem;
 }
+
+/* ── Zone badge on BinCard ─────────────────────────── */
+.bin-zone-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: var(--text-muted, rgba(255, 255, 255, 0.5));
+  margin-top: 3px;
+  letter-spacing: 0.02em;
+}
+
+.bin-zone-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Zone assign dropdown on BinCard ───────────────── */
+.bin-zone-assign-row {
+  padding: 8px 14px 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 4px;
+}
+
+.bin-zone-select {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: inherit;
+  font-size: 0.75rem;
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.bin-zone-select:hover,
+.bin-zone-select:focus {
+  border-color: rgba(255, 255, 255, 0.25);
+  outline: none;
+}
+
+.bin-zone-select option {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+/* ── PromptModal zone select ───────────────────────── */
+.modal-select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.modal-select option {
+  background: #0f172a;
+  color: #e2e8f0;
+}

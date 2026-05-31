@@ -1,7 +1,7 @@
 # BinThere — Smart Waste Intelligence Dashboard
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-yellow.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Version](https://img.shields.io/badge/Version-2.14.5-orange)](package.json)
+[![Version](https://img.shields.io/badge/Version-2.15.0-orange)](package.json)
 [![Node.js](https://img.shields.io/badge/Node.js-v18+-green)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18-blue)](https://react.dev/)
 [![ESP32](https://img.shields.io/badge/Hardware-ESP32-red)](https://www.espressif.com/)
@@ -280,6 +280,11 @@ Requires `Authorization: Bearer <token>` or `X-Device-Key: <key>`.
 | `POST`   | `/api/config/save`             | Save dynamic threshold variables (Admin)  |
 | `POST`   | `/api/admin/backup`            | Trigger database snapshot backup (Admin)  |
 | `GET`    | `/api/admin/select-directory`  | Windows directory picker dialog (Admin)   |
+| `GET`    | `/api/zones`                   | Retrieve all zones with bin counts (Admin)|
+| `POST`   | `/api/zones`                   | Create a new named zone with color (Admin)|
+| `PUT`    | `/api/zones/:id`               | Update zone name and color (Admin)        |
+| `DELETE` | `/api/zones/:id`               | Delete a zone and unassign its bins (Admin)|
+| `PATCH`  | `/api/bins/:id/zone`           | Assign/unassign a bin from a zone         |
 
 ---
 

@@ -115,9 +115,13 @@ export default function App() {
 
   const handleEditLocation = useCallback(
     async (binId, currLocation) => {
+      // Find the current bin to know its current zone
+      const currentBin = bins.find((b) => b.id === binId);
+      const currentZoneId = currentBin?.zone_id ?? "";
+
       setPromptConfig({
         isOpen: true,
-        title: "Update Bin Location",
+        title: "Edit Bin Location & Zone",
         fields: [
           {
             name: "location",
@@ -125,19 +129,33 @@ export default function App() {
             initialValue: currLocation,
             placeholder: "e.g. Lobby, 2nd Floor South",
           },
+          {
+            name: "zone_id",
+            label: "Assign to Zone",
+            type: "select",
+            required: false,
+            initialValue: String(currentZoneId),
+            options: [
+              { value: "", label: "— Unassigned —" },
+              ...zones.map((z) => ({ value: String(z.id), label: z.name })),
+            ],
+          },
         ],
         onSubmit: async (values) => {
           const newLoc = values.location.trim();
-          if (!newLoc || newLoc === currLocation) return;
+          if (!newLoc) return;
+          // Convert zone_id: empty string → null, otherwise parse int
+          const newZoneId =
+            values.zone_id === "" ? null : parseInt(values.zone_id, 10);
           try {
-            await updateBinLocation(binId, newLoc);
+            await updateBinLocation(binId, newLoc, newZoneId);
           } catch (err) {
-            alert(`Error updating location: ${err.message}`);
+            alert(`Error updating bin: ${err.message}`);
           }
         },
       });
     },
-    [updateBinLocation],
+    [updateBinLocation, bins, zones],
   );
 
   const handleAddBin = useCallback(async () => {
@@ -155,16 +173,29 @@ export default function App() {
           label: "Physical Location",
           placeholder: "e.g. Main Entrance",
         },
+        {
+          name: "zone_id",
+          label: "Assign to Zone (optional)",
+          type: "select",
+          required: false,
+          initialValue: "",
+          options: [
+            { value: "", label: "— Unassigned —" },
+            ...zones.map((z) => ({ value: String(z.id), label: z.name })),
+          ],
+        },
       ],
       onSubmit: async (values) => {
         try {
-          await addBin(values.name.trim(), values.location.trim());
+          const zoneId =
+            values.zone_id === "" ? null : parseInt(values.zone_id, 10);
+          await addBin(values.name.trim(), values.location.trim(), zoneId);
         } catch (err) {
           alert(`Error creating bin: ${err.message}`);
         }
       },
     });
-  }, [addBin]);
+  }, [addBin, zones]);
 
   const handleDeleteBin = useCallback(
     async (binId, binName) => {
@@ -339,6 +370,9 @@ export default function App() {
                     onBinClick={openDetail}
                     onEditLocation={handleEditLocation}
                     onDeleteBin={handleDeleteBin}
+                    zoneName={bin.zone_name ?? null}
+                    zones={zones}
+                    onAssignZone={assignBinToZone}
                   />
                 ))
               ) : (

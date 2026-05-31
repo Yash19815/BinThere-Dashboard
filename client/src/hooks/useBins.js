@@ -63,11 +63,13 @@ export function useBins(token) {
     onStatusChange: setWsStatus,
   });
 
-  const addBin = async (name, location) => {
+  const addBin = async (name, location, zoneId = null) => {
+    const body = { name, location };
+    if (zoneId !== null && zoneId !== undefined) body.zone_id = zoneId;
     const res = await fetch(`${API_URL}/api/bins`, {
       method: "POST",
       headers: { ...authHeaders(token), "Content-Type": "application/json" },
-      body: JSON.stringify({ name, location }),
+      body: JSON.stringify(body),
     });
     const json = await res.json();
     if (json.status === "success") {
@@ -80,17 +82,22 @@ export function useBins(token) {
     throw new Error(json.message);
   };
 
-  const updateBinLocation = async (binId, location) => {
+  const updateBinLocation = async (binId, location, zoneId = undefined) => {
+    const body = { location };
+    // Only include zone_id when it was explicitly provided (null = unassign)
+    if (zoneId !== undefined) body.zone_id = zoneId === "" ? null : zoneId;
     const res = await fetch(`${API_URL}/api/bins/${binId}`, {
       method: "PATCH",
       headers: { ...authHeaders(token), "Content-Type": "application/json" },
-      body: JSON.stringify({ location }),
+      body: JSON.stringify(body),
     });
     const json = await res.json();
     if (json.status === "success") {
       setBins((prev) =>
         prev.map((b) =>
-          b.id === binId ? { ...b, location: json.bin.location } : b,
+          b.id === binId
+            ? { ...b, location: json.bin.location, zone_id: json.bin.zone_id ?? b.zone_id, zone_name: json.bin.zone_name ?? b.zone_name }
+            : b,
         ),
       );
       return true;

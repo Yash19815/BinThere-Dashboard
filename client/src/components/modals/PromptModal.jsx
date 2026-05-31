@@ -54,10 +54,11 @@ const PromptModal = ({
   };
 
   const handleSubmit = () => {
-    // Basic validation: ensure all fields have some value
-    const isComplete = fields.every(
-      (f) => String(values[f.name] || "").trim() !== "",
-    );
+    // Validate: only enforce non-empty for fields that aren't marked optional
+    const isComplete = fields.every((f) => {
+      if (f.required === false) return true; // optional fields always pass
+      return String(values[f.name] ?? "").trim() !== "";
+    });
     if (!isComplete) return;
 
     onSubmit(values);
@@ -84,16 +85,31 @@ const PromptModal = ({
           {fields.map((field, idx) => (
             <div className="modal-field" key={field.name}>
               <label htmlFor={field.name}>{field.label}</label>
-              <input
-                id={field.name}
-                ref={idx === 0 ? firstInputRef : null}
-                type={field.type || "text"}
-                value={values[field.name] || ""}
-                onChange={(e) => handleChange(field.name, e.target.value)}
-                placeholder={field.placeholder || ""}
-                className="modal-input"
-                autoComplete="off"
-              />
+              {field.type === "select" ? (
+                <select
+                  id={field.name}
+                  className="modal-input modal-select"
+                  value={values[field.name] ?? ""}
+                  onChange={(e) => handleChange(field.name, e.target.value)}
+                >
+                  {(field.options || []).map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  id={field.name}
+                  ref={idx === 0 ? firstInputRef : null}
+                  type={field.type || "text"}
+                  value={values[field.name] || ""}
+                  onChange={(e) => handleChange(field.name, e.target.value)}
+                  placeholder={field.placeholder || ""}
+                  className="modal-input"
+                  autoComplete="off"
+                />
+              )}
             </div>
           ))}
         </div>

@@ -17,6 +17,9 @@ function BinCard({
   onBinClick,
   onEditLocation,
   onDeleteBin,
+  zoneName = null,
+  zones = [],
+  onAssignZone = () => {},
 }) {
   const count = (dryPct !== null ? 1 : 0) + (wetPct !== null ? 1 : 0);
   const avgPct = count > 0 ? ((dryPct ?? 0) + (wetPct ?? 0)) / count : 0;
@@ -68,6 +71,15 @@ function BinCard({
               </button>
             </div>
           </div>
+          {zoneName && (
+            <div className="bin-zone-badge">
+              <span
+                className="bin-zone-dot"
+                style={{ background: zones.find((z) => z.name === zoneName)?.color || "#4f98a3" }}
+              />
+              {zoneName}
+            </div>
+          )}
         </div>
       </div>
 
@@ -97,6 +109,24 @@ function BinCard({
           />
         </div>
         <span className="overall-pct">{avgPct.toFixed(0)}%</span>
+      </div>
+
+      <div className="bin-zone-assign-row" onClick={(e) => e.stopPropagation()}>
+        <select
+          className="bin-zone-select"
+          value={zones.find((z) => z.name === zoneName)?.id ?? ""}
+          onChange={(e) => {
+            const val = e.target.value;
+            onAssignZone(binId, val === "" ? null : Number(val));
+          }}
+        >
+          <option value="">Unassigned</option>
+          {zones.map((z) => (
+            <option key={z.id} value={z.id}>
+              {z.name}
+            </option>
+          ))}
+        </select>
       </div>
     </div>
   );

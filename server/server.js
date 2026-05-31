@@ -686,17 +686,23 @@ app.get("/api/bins", requireAuth, (req, res) => {
 });
 
 app.post("/api/bins", requireAuth, (req, res) => {
-  const { name, location, max_height_cm = 25 } = req.body;
+  const { name, location, max_height_cm = 25, zone_id } = req.body;
   if (!name || !location)
     return res
       .status(400)
       .json({ status: "error", message: "Name and location required" });
 
+  // Validate zone_id if provided
+  if (zone_id !== undefined && zone_id !== null) {
+    if (!db.prepare("SELECT 1 FROM zones WHERE id = ?").get(zone_id))
+      return res.status(404).json({ status: "error", message: "Zone not found" });
+  }
+
   const result = db
     .prepare(
-      "INSERT INTO bins (name, location, max_height_cm) VALUES (?, ?, ?)",
+      "INSERT INTO bins (name, location, max_height_cm, zone_id) VALUES (?, ?, ?, ?)",
     )
-    .run(name.trim(), location.trim(), max_height_cm);
+    .run(name.trim(), location.trim(), max_height_cm, zone_id ?? null);
   const newBin = getBinWithCompartments(result.lastInsertRowid);
   rebuildFleetCache();
   broadcast({ type: "new", bin: newBin });
@@ -744,20 +750,36 @@ app.delete("/api/bins/:id", requireAuth, (req, res) => {
 
 app.patch("/api/bins/:id", requireAuth, (req, res) => {
   const binId = parseInt(req.params.id, 10);
-  const { location } = req.body;
+  const { location, zone_id } = req.body;
   if (typeof location !== "string" || !location.trim())
     return res
       .status(400)
       .json({ status: "error", message: "Location required" });
 
-  const result = db
-    .prepare("UPDATE bins SET location = ? WHERE id = ?")
-    .run(location.trim(), binId);
+  // Validate zone_id when explicitly supplied
+  if (zone_id !== undefined && zone_id !== null) {
+    if (!db.prepare("SELECT 1 FROM zones WHERE id = ?").get(zone_id))
+      return res.status(404).json({ status: "error", message: "Zone not found" });
+  }
+
+  let result;
+  if (zone_id !== undefined) {
+    // Update both location and zone_id
+    result = db
+      .prepare("UPDATE bins SET location = ?, zone_id = ? WHERE id = ?")
+      .run(location.trim(), zone_id === null ? null : zone_id, binId);
+  } else {
+    // Location-only update (backward-compatible)
+    result = db
+      .prepare("UPDATE bins SET location = ? WHERE id = ?")
+      .run(location.trim(), binId);
+  }
+
   if (result.changes === 0)
     return res.status(404).json({ status: "error", message: "Bin not found" });
 
-  const updatedBin = getBinWithCompartments(binId);
-  patchFleetCache(binId);
+  rebuildFleetCache();
+  const updatedBin = fleetCache?.find((b) => b.id === binId);
   broadcast({ type: "update", bin: updatedBin });
   res.json({ status: "success", bin: updatedBin });
 });
