@@ -26,4 +26,4 @@ OTA updates allow you to push new C++ firmware to the ESP32 over Wi-Fi without n
 ## Included Files
 
 - `ota_confirm.ino`: A minimal fallback sketch used to test basic OTA functionality if the main pipeline fails.
-- Reference headers: `config.h` and `webpage.h` serving as examples for standalone OTA implementation.
+- Reference headers: `config.h` (automatically copied from `config.h.example` and synchronized with the shared `DEVICE_API_KEY` by `npm run configure` at the project root) and `webpage.h` serving as examples for standalone OTA implementation.

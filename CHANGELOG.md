@@ -2,6 +2,7 @@
 
 | Version  | Date       | Type           | Summary                                                                                              |
 | -------- | ---------- | -------------- | ---------------------------------------------------------------------------------------------------- |
+| v2.15.1  | 2026-07-11 | 🚀 Update      | Unified setup automation: synchronised configs (ESP32/OTA/Python) and Python virtual environment     |
 | v2.15.0  | 2026-05-31 | ✨ Feature     | Zonal Mapping: zones, zone view, BinCard zone badge/select, zone fields in Add/Edit bin modals       |
 | v2.14.5  | 2026-05-30 | 📝 Docs        | Synchronized and corrected code-mismatches and security gaps across all project README files        |
 | v2.14.4  | 2026-05-30 | ✨ Feature     | Interactive multi-dustbin simulation in test-sensor.ps1 with separate random values                  |
@@ -55,6 +56,23 @@
 All notable changes to the BinThere Dashboard are documented here.
 Versioning follows [Semantic Versioning](https://semver.org/).
 Format follows [Keep a Changelog](https://keepachangelog.com/).
+
+## [v2.15.1] — 2026-07-11
+
+### Summary
+
+Upgraded the unified setup script (`setup.cjs`) to fully configure all project folders, synchronise credentials across all configuration files, and automate Python virtual environment provisioning.
+
+### Added
+
+- **Python virtual environment automation** in `scripts/setup.cjs`: automatically creates a `.venv` directory and runs `pip install -r requirements.txt` if Python is detected.
+- **`python_scripts/.env.example`**: template for Python edge-AI environment variables.
+
+### Changed
+
+- **Unified Configuration Copying**: Expanded `setup.cjs` to copy `ESP32_Code/config.h.example` to `ESP32_Code/config.h`, `ota_check/config.h.example` to `ota_check/config.h`, and `python_scripts/.env.example` to `python_scripts/.env`.
+- **Shared API Key Syncing**: Automatically reads/generates a secure `DEVICE_API_KEY` for the server, then propagates and injects it into newly created C++ headers and Python `.env` files.
+- **Documentation Alignment**: Synchronized references in root `README.md`, `CONTRIBUTING.md`, `scripts/README.md`, `python_scripts/README.md`, `ESP32_Code/README.md`, and `ota_check/README.md` to reference `setup.cjs` correctly.
 
 ## [v2.15.0] — 2026-05-31
 

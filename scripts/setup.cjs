@@ -1,11 +1,12 @@
 /**
- * @fileoverview Project Setup Script (setup.js)
+ * @fileoverview Project Setup Script (setup.cjs)
  *
  * Automates the initial project configuration:
  * 1. Installs dependencies in all workspaces (root, server, client)
- * 2. Creates .env files from templates
- * 3. Generates a secure JWT_SECRET for the backend
+ * 2. Creates .env and config.h files from templates across all folders
+ * 3. Generates a secure JWT_SECRET and shared DEVICE_API_KEY
  * 4. Verifies database state
+ * 5. Sets up the Python virtual environment and dependencies if python is available
  */
 
 const fs = require("fs");
@@ -50,7 +51,18 @@ async function setup() {
   log("Installing client dependencies...");
   run("npm install", path.join(rootPath, "client"));
 
-  // 2. Setup Environment Variables
+  // 2. Resolve or generate shared API Key
+  let sharedApiKey = null;
+  const serverEnvPath = path.join(rootPath, "server", ".env");
+  if (fs.existsSync(serverEnvPath)) {
+    const serverEnv = fs.readFileSync(serverEnvPath, "utf8");
+    const match = serverEnv.match(/DEVICE_API_KEY=([^\r\n]+)/);
+    if (match) {
+      sharedApiKey = match[1].trim();
+    }
+  }
+
+  // 3. Setup Environment Variables and Configurations
   const envConfigs = [
     {
       dir: "server",
@@ -59,18 +71,64 @@ async function setup() {
       onInit: (content) => {
         const secret = crypto.randomBytes(48).toString("hex");
         log("Generating secure JWT_SECRET...");
-        // If JWT_SECRET exists but is empty or default, replace it
         if (content.includes("JWT_SECRET=")) {
-          return content.replace(/JWT_SECRET=.*/, `JWT_SECRET=${secret}`);
+          content = content.replace(/JWT_SECRET=.*/, `JWT_SECRET=${secret}`);
         } else {
-          return content + `\nJWT_SECRET=${secret}\n`;
+          content = content + `\nJWT_SECRET=${secret}\n`;
         }
+
+        if (!sharedApiKey) {
+          sharedApiKey = crypto.randomBytes(32).toString("hex");
+          log("Generating secure DEVICE_API_KEY...");
+        }
+        if (content.includes("DEVICE_API_KEY=")) {
+          content = content.replace(/DEVICE_API_KEY=.*/, `DEVICE_API_KEY=${sharedApiKey}`);
+        } else {
+          content = content + `\nDEVICE_API_KEY=${sharedApiKey}\n`;
+        }
+        return content;
       },
     },
     {
       dir: "client",
       example: ".env.example",
       target: ".env",
+    },
+    {
+      dir: "ESP32_Code",
+      example: "config.h.example",
+      target: "config.h",
+      onInit: (content) => {
+        if (sharedApiKey) {
+          log("Injecting shared DEVICE_API_KEY into ESP32 config.h...");
+          return content.replace(/"your-secure-device-api-key"/, `"${sharedApiKey}"`);
+        }
+        return content;
+      },
+    },
+    {
+      dir: "ota_check",
+      example: "config.h.example",
+      target: "config.h",
+      onInit: (content) => {
+        if (sharedApiKey) {
+          log("Injecting shared DEVICE_API_KEY into ota_check config.h...");
+          return content.replace(/"your-secure-device-api-key"/, `"${sharedApiKey}"`);
+        }
+        return content;
+      },
+    },
+    {
+      dir: "python_scripts",
+      example: ".env.example",
+      target: ".env",
+      onInit: (content) => {
+        if (sharedApiKey) {
+          log("Injecting shared DEVICE_API_KEY into python_scripts/.env...");
+          return content.replace(/your-secure-device-api-key/, sharedApiKey);
+        }
+        return content;
+      },
     },
   ];
 
@@ -95,7 +153,7 @@ async function setup() {
     }
   }
 
-  // 3. Database Check
+  // 4. Database Check
   const dbPath = path.join(rootPath, "server", "bins.db");
   if (!fs.existsSync(dbPath)) {
     log(
@@ -103,6 +161,56 @@ async function setup() {
     );
   } else {
     log('Database "bins.db" detected.');
+  }
+
+  // 5. Python Environment Setup
+  const pythonScriptsDir = path.join(rootPath, "python_scripts");
+  const requirementsPath = path.join(pythonScriptsDir, "requirements.txt");
+  const venvPath = path.join(pythonScriptsDir, ".venv");
+
+  if (fs.existsSync(requirementsPath)) {
+    log("Checking Python environment...");
+    let pythonCmd = null;
+    try {
+      execSync("python --version", { stdio: "ignore" });
+      pythonCmd = "python";
+    } catch (e) {
+      try {
+        execSync("python3 --version", { stdio: "ignore" });
+        pythonCmd = "python3";
+      } catch (e3) {
+        log("Python not detected. Skipping Python virtual environment setup.");
+      }
+    }
+
+    if (pythonCmd) {
+      if (!fs.existsSync(venvPath)) {
+        log("Creating Python virtual environment (.venv)...");
+        try {
+          execSync(`${pythonCmd} -m venv .venv`, { cwd: pythonScriptsDir, stdio: "inherit" });
+        } catch (err) {
+          error("Failed to create virtual environment. Skipping dependencies installation.");
+          pythonCmd = null;
+        }
+      } else {
+        log("Python virtual environment (.venv) already exists.");
+      }
+
+      if (pythonCmd) {
+        log("Installing Python dependencies...");
+        const isWindows = process.platform === "win32";
+        const pythonBin = isWindows
+          ? path.join(venvPath, "Scripts", "python.exe")
+          : path.join(venvPath, "bin", "python");
+
+        try {
+          execSync(`"${pythonBin}" -m pip install -r requirements.txt`, { cwd: pythonScriptsDir, stdio: "inherit" });
+          log("Python dependencies installed successfully.");
+        } catch (err) {
+          error("Failed to install Python dependencies. Please run manually.");
+        }
+      }
+    }
   }
 
   console.log(`

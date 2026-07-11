@@ -10,6 +10,9 @@ This directory contains the Python scripts forming the "Master Brain" of the Bin
 
 ## Setup & Requirements
 
+> [!NOTE]
+> **Automated Setup**: You can run `npm run configure` from the project root to automatically create the virtual environment, install requirements, and scaffold the `.env` configuration file.
+
 > [!IMPORTANT]
 > A Python Virtual Environment (`venv`) is strictly required to isolate dependencies and prevent system-wide conflicts.
 

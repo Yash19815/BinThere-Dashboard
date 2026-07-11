@@ -19,7 +19,7 @@ BinThere-Dashboard/
 ├── python_scripts/  # Python utilities for ML testing
 ├── serial_monitor/  # Standalone serial debugging tool
 ├── ota_check/       # OTA update monitoring scripts
-└── scripts/         # Automation (setup.js, etc.)
+└── scripts/         # Automation (setup.cjs, etc.)
 ```
 
 ---

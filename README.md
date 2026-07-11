@@ -1,7 +1,7 @@
 # BinThere — Smart Waste Intelligence Dashboard
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache2.0-yellow.svg)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Version](https://img.shields.io/badge/Version-2.15.0-orange)](package.json)
+[![Version](https://img.shields.io/badge/Version-2.15.1-orange)](package.json)
 [![Node.js](https://img.shields.io/badge/Node.js-v18+-green)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-18-blue)](https://react.dev/)
 [![ESP32](https://img.shields.io/badge/Hardware-ESP32-red)](https://www.espressif.com/)
@@ -120,7 +120,7 @@ flowchart TB
 ```text
 Bintethere-Final/
 ├── scripts/                  ← Setup and configuration utilities
-│   └── setup.js              ← Automated one-click installer
+│   └── setup.cjs             ← Automated one-click installer
 ├── package.json              ← Root manager (concurrent dev startup & build tasks)
 │
 ├── electron/                 ← Native Desktop Wrapper
