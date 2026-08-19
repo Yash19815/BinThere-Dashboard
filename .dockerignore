@@ -1,0 +1,29 @@
+# Node dependencies & build outputs
+**/node_modules
+**/dist
+**/dist-electron
+**/build
+**/.cache
+
+# Logs & Environment
+*.log
+**/npm-debug.log*
+**/.env
+
+# Version Control & IDE
+.git
+.gitignore
+.agents
+.vscode
+.idea
+**/.vs
+
+# Non-container scripts and temporary data
+scratch
+graphify-out
+ESP32_Code
+*.ps1
+*.bat
+LICENSE
+README.md
+

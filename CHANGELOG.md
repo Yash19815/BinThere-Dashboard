@@ -2,10 +2,26 @@
 
 | Version  | Date       | Type           | Summary                                                                                              |
 | -------- | ---------- | -------------- | ---------------------------------------------------------------------------------------------------- |
+| v2.15.3  | 2026-08-19 | 🚀 Update      | Production Docker multi-stage containerization, liveness health checks, and persistent volume setup  |
 | v2.15.2  | 2026-08-19 | 🔧 Fix         | Fixed `better-sqlite3` native module ABI mismatch and PowerShell release script parser errors        |
 | v2.15.1  | 2026-07-11 | 🚀 Update      | Unified setup automation: synchronised configs (ESP32/OTA/Python) and Python virtual environment     |
 | v2.15.0  | 2026-05-31 | ✨ Feature     | Zonal Mapping: zones, zone view, BinCard zone badge/select, zone fields in Add/Edit bin modals       |
 | v2.14.5  | 2026-05-30 | 📝 Docs        | Synchronized and corrected code-mismatches and security gaps across all project README files        |
+
+## [v2.15.3] — 2026-08-19
+
+### Summary
+Overhauled Docker containerization stack with security-hardened multi-stage builds (`Node 20-alpine`), `/api/health` liveness probe endpoint, unified production static client asset serving, non-root runtime permissions, and Docker Compose persistent volume configuration.
+
+### Added
+- **`/api/health` Liveness Probe**: Added unauthenticated `/api/health` REST endpoint in `server/server.js` returning system status and uptime for Docker healthchecks.
+- **Production Static Asset Serving**: Added static file middleware in `server/server.js` to serve `client/dist` frontend assets when running in production.
+
+### Changed
+- **Multi-Stage `Dockerfile`**: Migrated from invalid base image `node:26.2.0-alpine` to Node 20-alpine 3-stage build context (`client-builder`, `server-builder`, `runner`) with native `better-sqlite3` compilation tooling (`python3`, `make`, `g++`, `sqlite-dev`).
+- **`compose.yaml`**: Refactored compose file with container name `binthere-server`, `restart: unless-stopped`, healthcheck strategy, and persistent named volume `binthere_data`.
+- **`.dockerignore`**: Cleaned up build context exclusions for scripts, node modules, logs, and development artifacts.
+- **`README.Docker.md`**: Updated documentation with container quick-start commands, standalone Docker build instructions, and cross-platform build options.
 
 ## [v2.15.2] — 2026-08-19
 

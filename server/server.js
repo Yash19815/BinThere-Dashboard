@@ -588,6 +588,15 @@ app.use((req, res, next) => {
   next();
 });
 
+// ── Health Check Route ──────────────────────────────────────────────
+app.get("/api/health", (req, res) => {
+  res.json({
+    status: "ok",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // ── Auth Routes ─────────────────────────────────────────────────────
 
 app.post("/api/auth/login", async (req, res) => {
@@ -1322,6 +1331,16 @@ app.get("/api/admin/select-directory", requireAdmin, (req, res) => {
     }
   });
 });
+
+// Serve static client assets in production if client/dist exists
+const clientDistPath = path.join(__dirname, "../client/dist");
+if (fs.existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/ws")) return next();
+    res.sendFile(path.join(clientDistPath, "index.html"));
+  });
+}
 
 const HOST = process.env.HOST || "0.0.0.0";
 server.listen(PORT, HOST, () => {
