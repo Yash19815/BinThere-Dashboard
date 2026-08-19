@@ -233,8 +233,9 @@ if (Test-Path "dist-electron") {
     try {
         Remove-Item -Recurse -Force "dist-electron" -ErrorAction Stop
     } catch {
-        Write-Host "  [!] Retrying dist-electron removal..." -ForegroundColor Yellow
-        Start-Sleep -Seconds 2
+        Write-Host "  [!] dist-electron locked by background file watcher. Releasing handle..." -ForegroundColor Yellow
+        Get-WmiObject Win32_Process | Where-Object { $_.Name -eq "Code.exe" -and $_.CommandLine -like "*utility-sub-type=node*" } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }
+        Start-Sleep -Seconds 1
         Remove-Item -Recurse -Force "dist-electron" -ErrorAction SilentlyContinue
     }
 }

@@ -16,7 +16,8 @@ Fixed native module compilation error (`ERR_DLOPEN_FAILED`) on `npm start` cause
 - **`better-sqlite3` ABI Mismatch**: Executed native module rebuild targeting system Node.js environment to resolve module version incompatibility.
 - **`npm rebuild` CLI Flags**: Replaced deprecated/unsupported `--build-from-source` flags in `package.json` with `electron-rebuild` for Electron builds and standard `npm rebuild` for Node.js.
 - **PowerShell Script Parser Error**: Replaced inline `node -e` string in `release.ps1` with native PowerShell JSON parsing to eliminate PowerShell comma/token syntax errors.
-- **`dist-electron` File Locking**: Added fallback error handling and process termination in `release.ps1` and `build.ps1` to prevent `Remove-Item` crashes when files like `app.asar` are locked.
+- **`dist-electron` File Locking**: Added `.vscode/settings.json` build exclusions and fallback file-handle release logic in `release.ps1` and `build.ps1` to prevent `app.asar` locking during builds.
+
 | v2.14.4  | 2026-05-30 | ✨ Feature     | Interactive multi-dustbin simulation in test-sensor.ps1 with separate random values                  |
 | v2.14.3  | 2026-05-25 | 🔧 Fix         | Reverted Electron to compatible v30.5.1 and resolved Windows production icon path resolution issues |
 | v2.14.2  | 2026-05-25 | 🔒 Security    | Removed obsolete electron-rebuild dependency and secured exceljs transitive dependencies             |
