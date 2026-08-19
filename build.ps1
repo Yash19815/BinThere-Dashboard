@@ -62,12 +62,27 @@ Write-Host "  Terminating existing app processes..." -ForegroundColor DarkGray
 $OldErrorActionPreference = $ErrorActionPreference
 $ErrorActionPreference = "SilentlyContinue"
 taskkill /F /IM BinThere.exe /T 2>$null | Out-Null
-taskkill /F /IM node.exe /FI "WINDOWTITLE eq BinThere*" /T 2>$null | Out-Null
+taskkill /F /IM electron.exe /T 2>$null | Out-Null
+taskkill /F /IM node.exe /T 2>$null | Out-Null
 $ErrorActionPreference = $OldErrorActionPreference
 Start-Sleep -Seconds 2
 
-if (Test-Path "dist-electron") { Remove-Item -Recurse -Force "dist-electron" }
-if (Test-Path "client\dist")   { Remove-Item -Recurse -Force "client\dist" }
+if (Test-Path "dist-electron") {
+    try {
+        Remove-Item -Recurse -Force "dist-electron" -ErrorAction Stop
+    } catch {
+        Write-Host "  [!] Retrying dist-electron removal..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 2
+        Remove-Item -Recurse -Force "dist-electron" -ErrorAction SilentlyContinue
+    }
+}
+if (Test-Path "client\dist") {
+    try {
+        Remove-Item -Recurse -Force "client\dist" -ErrorAction Stop
+    } catch {
+        Remove-Item -Recurse -Force "client\dist" -ErrorAction SilentlyContinue
+    }
+}
 
 Write-Host "  [OK] dist-electron/ and client/dist/ removed." -ForegroundColor Green
 Write-Host ""

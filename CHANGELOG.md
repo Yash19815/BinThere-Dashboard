@@ -2,19 +2,21 @@
 
 | Version  | Date       | Type           | Summary                                                                                              |
 | -------- | ---------- | -------------- | ---------------------------------------------------------------------------------------------------- |
-| v2.15.2  | 2026-08-19 | 🔧 Fix         | Fixed `better-sqlite3` native module ABI mismatch and modernized npm rebuild scripts                 |
+| v2.15.2  | 2026-08-19 | 🔧 Fix         | Fixed `better-sqlite3` native module ABI mismatch and PowerShell release script parser errors        |
 | v2.15.1  | 2026-07-11 | 🚀 Update      | Unified setup automation: synchronised configs (ESP32/OTA/Python) and Python virtual environment     |
+| v2.15.0  | 2026-05-31 | ✨ Feature     | Zonal Mapping: zones, zone view, BinCard zone badge/select, zone fields in Add/Edit bin modals       |
+| v2.14.5  | 2026-05-30 | 📝 Docs        | Synchronized and corrected code-mismatches and security gaps across all project README files        |
 
 ## [v2.15.2] — 2026-08-19
 
 ### Summary
-Fixed native module compilation error (`ERR_DLOPEN_FAILED`) on `npm start` caused by ABI mismatch after Electron builds. Updated `package.json` rebuild scripts to support npm v10+ CLI flag standards.
+Fixed native module compilation error (`ERR_DLOPEN_FAILED`) on `npm start` caused by ABI mismatch after Electron builds. Fixed PowerShell parsing and file locking errors in `release.ps1` and `build.ps1`.
 
 ### Fixed
 - **`better-sqlite3` ABI Mismatch**: Executed native module rebuild targeting system Node.js environment to resolve module version incompatibility.
 - **`npm rebuild` CLI Flags**: Replaced deprecated/unsupported `--build-from-source` flags in `package.json` with `electron-rebuild` for Electron builds and standard `npm rebuild` for Node.js.
-| v2.15.0  | 2026-05-31 | ✨ Feature     | Zonal Mapping: zones, zone view, BinCard zone badge/select, zone fields in Add/Edit bin modals       |
-| v2.14.5  | 2026-05-30 | 📝 Docs        | Synchronized and corrected code-mismatches and security gaps across all project README files        |
+- **PowerShell Script Parser Error**: Replaced inline `node -e` string in `release.ps1` with native PowerShell JSON parsing to eliminate PowerShell comma/token syntax errors.
+- **`dist-electron` File Locking**: Added fallback error handling and process termination in `release.ps1` and `build.ps1` to prevent `Remove-Item` crashes when files like `app.asar` are locked.
 | v2.14.4  | 2026-05-30 | ✨ Feature     | Interactive multi-dustbin simulation in test-sensor.ps1 with separate random values                  |
 | v2.14.3  | 2026-05-25 | 🔧 Fix         | Reverted Electron to compatible v30.5.1 and resolved Windows production icon path resolution issues |
 | v2.14.2  | 2026-05-25 | 🔒 Security    | Removed obsolete electron-rebuild dependency and secured exceljs transitive dependencies             |
