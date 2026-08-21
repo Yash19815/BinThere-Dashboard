@@ -98,7 +98,8 @@ export default function ZoneMapView({
               role="button"
               tabIndex={0}
               onKeyDown={(e) =>
-                (e.key === "Enter" || e.key === " ") && toggleCollapse(section.key)
+                (e.key === "Enter" || e.key === " ") &&
+                toggleCollapse(section.key)
               }
               aria-expanded={!isCollapsed}
             >
@@ -108,13 +109,24 @@ export default function ZoneMapView({
                   style={{ background: section.color }}
                 />
                 <span className="zone-section-name">{section.label}</span>
-                <span className="zone-badge">{section.bins.length} bin{section.bins.length !== 1 ? "s" : ""}</span>
+                <span className="zone-badge">
+                  {section.bins.length} bin
+                  {section.bins.length !== 1 ? "s" : ""}
+                </span>
                 {section.bins.length > 0 && (
-                  <span className="zone-avg-fill">avg {avg.toFixed(0)}% full</span>
+                  <span className="zone-avg-fill">
+                    avg {avg.toFixed(0)}% full
+                  </span>
                 )}
               </div>
-              <span className={`zone-collapse-chevron ${isCollapsed ? "zone-collapse-chevron--collapsed" : ""}`}>
-                {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+              <span
+                className={`zone-collapse-chevron ${isCollapsed ? "zone-collapse-chevron--collapsed" : ""}`}
+              >
+                {isCollapsed ? (
+                  <ChevronRight size={16} />
+                ) : (
+                  <ChevronDown size={16} />
+                )}
               </span>
             </div>
 

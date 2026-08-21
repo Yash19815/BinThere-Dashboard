@@ -104,7 +104,9 @@ export function useZones(token) {
       await fetchZones();
       return json.bin;
     }
-    throw new Error(json.error || json.message || "Failed to assign bin to zone");
+    throw new Error(
+      json.error || json.message || "Failed to assign bin to zone",
+    );
   };
 
   return {

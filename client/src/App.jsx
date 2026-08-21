@@ -56,8 +56,14 @@ export default function App() {
   const [viewMode, setViewMode] = useState("grid"); // 'grid' | 'zone'
   const [isZoneManagerOpen, setIsZoneManagerOpen] = useState(false);
 
-  const { zones, createZone, updateZone, deleteZone, assignBinToZone, refreshZones } =
-    useZones(token);
+  const {
+    zones,
+    createZone,
+    updateZone,
+    deleteZone,
+    assignBinToZone,
+    refreshZones,
+  } = useZones(token);
 
   useEffect(() => {
     const checkConfigStatus = async () => {

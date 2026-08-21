@@ -150,7 +150,10 @@ export default function ZoneManagerModal({
                             onChange={(e) =>
                               setEditState((prev) => ({
                                 ...prev,
-                                [zone.id]: { ...prev[zone.id], color: e.target.value },
+                                [zone.id]: {
+                                  ...prev[zone.id],
+                                  color: e.target.value,
+                                },
                               }))
                             }
                             title="Zone colour"
@@ -162,7 +165,10 @@ export default function ZoneManagerModal({
                             onChange={(e) =>
                               setEditState((prev) => ({
                                 ...prev,
-                                [zone.id]: { ...prev[zone.id], name: e.target.value },
+                                [zone.id]: {
+                                  ...prev[zone.id],
+                                  name: e.target.value,
+                                },
                               }))
                             }
                             placeholder="Zone name"
@@ -184,7 +190,9 @@ export default function ZoneManagerModal({
                             </button>
                           </div>
                           {editErrors[zone.id] && (
-                            <span className="zone-inline-error">{editErrors[zone.id]}</span>
+                            <span className="zone-inline-error">
+                              {editErrors[zone.id]}
+                            </span>
                           )}
                         </div>
                       ) : (
@@ -196,7 +204,8 @@ export default function ZoneManagerModal({
                           />
                           <span className="zone-row-name">{zone.name}</span>
                           <span className="zone-row-count">
-                            {zone.bin_count} bin{zone.bin_count !== 1 ? "s" : ""}
+                            {zone.bin_count} bin
+                            {zone.bin_count !== 1 ? "s" : ""}
                           </span>
                           <div className="zone-row-actions">
                             <button

@@ -217,12 +217,10 @@ function requireAdmin(req, res, next) {
     if (req.user && req.user.role === "admin") {
       next();
     } else {
-      return res
-        .status(403)
-        .json({
-          status: "error",
-          message: "Forbidden — Administrative privileges required",
-        });
+      return res.status(403).json({
+        status: "error",
+        message: "Forbidden — Administrative privileges required",
+      });
     }
   });
 }
@@ -704,7 +702,9 @@ app.post("/api/bins", requireAuth, (req, res) => {
   // Validate zone_id if provided
   if (zone_id !== undefined && zone_id !== null) {
     if (!db.prepare("SELECT 1 FROM zones WHERE id = ?").get(zone_id))
-      return res.status(404).json({ status: "error", message: "Zone not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Zone not found" });
   }
 
   const result = db
@@ -768,7 +768,9 @@ app.patch("/api/bins/:id", requireAuth, (req, res) => {
   // Validate zone_id when explicitly supplied
   if (zone_id !== undefined && zone_id !== null) {
     if (!db.prepare("SELECT 1 FROM zones WHERE id = ?").get(zone_id))
-      return res.status(404).json({ status: "error", message: "Zone not found" });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Zone not found" });
   }
 
   let result;
@@ -951,22 +953,18 @@ app.post("/api/bins/:id/measurement", requireAuth, (req, res) => {
   if (raw_distance_cm !== undefined) {
     rawDistance = parseFloat(raw_distance_cm);
     if (isNaN(rawDistance) || rawDistance < 0)
-      return res
-        .status(400)
-        .json({
-          status: "error",
-          message: "Invalid raw_distance_cm — must be a non-negative number",
-        });
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid raw_distance_cm — must be a non-negative number",
+      });
     fillLevel = computeFillLevel(rawDistance, bin.max_height_cm);
   } else if (fill_level_percent !== undefined) {
     fillLevel = parseFloat(fill_level_percent);
     if (isNaN(fillLevel))
-      return res
-        .status(400)
-        .json({
-          status: "error",
-          message: "Invalid fill_level_percent — must be a number",
-        });
+      return res.status(400).json({
+        status: "error",
+        message: "Invalid fill_level_percent — must be a number",
+      });
     fillLevel = Math.min(100, Math.max(0, fillLevel));
     rawDistance = parseFloat(
       ((1 - fillLevel / 100) * bin.max_height_cm).toFixed(2),
@@ -1088,17 +1086,23 @@ app.get("/api/zones", requireAuth, (req, res) => {
 app.post("/api/zones", requireAdmin, (req, res) => {
   const { name, color = "#4f98a3" } = req.body;
   if (!name || !name.trim())
-    return res.status(400).json({ status: "error", error: "Zone name is required" });
+    return res
+      .status(400)
+      .json({ status: "error", error: "Zone name is required" });
 
   try {
     const result = db
       .prepare("INSERT INTO zones (name, color) VALUES (?, ?)")
       .run(name.trim(), color.trim());
-    const zone = db.prepare("SELECT * FROM zones WHERE id = ?").get(result.lastInsertRowid);
+    const zone = db
+      .prepare("SELECT * FROM zones WHERE id = ?")
+      .get(result.lastInsertRowid);
     res.status(201).json({ status: "success", zone });
   } catch (e) {
     if (e.message && e.message.includes("UNIQUE"))
-      return res.status(409).json({ status: "error", error: "Zone name already exists" });
+      return res
+        .status(409)
+        .json({ status: "error", error: "Zone name already exists" });
     res.status(500).json({ status: "error", error: e.message });
   }
 });
@@ -1114,20 +1118,30 @@ app.put("/api/zones/:id", requireAdmin, (req, res) => {
   if (!existing)
     return res.status(404).json({ status: "error", error: "Zone not found" });
 
-  const name = req.body.name !== undefined ? req.body.name.trim() : existing.name;
-  const color = req.body.color !== undefined ? req.body.color.trim() : existing.color;
+  const name =
+    req.body.name !== undefined ? req.body.name.trim() : existing.name;
+  const color =
+    req.body.color !== undefined ? req.body.color.trim() : existing.color;
 
   if (!name)
-    return res.status(400).json({ status: "error", error: "Zone name cannot be empty" });
+    return res
+      .status(400)
+      .json({ status: "error", error: "Zone name cannot be empty" });
 
   try {
-    db.prepare("UPDATE zones SET name = ?, color = ? WHERE id = ?").run(name, color, zoneId);
+    db.prepare("UPDATE zones SET name = ?, color = ? WHERE id = ?").run(
+      name,
+      color,
+      zoneId,
+    );
     rebuildFleetCache();
     const zone = db.prepare("SELECT * FROM zones WHERE id = ?").get(zoneId);
     res.json({ status: "success", zone });
   } catch (e) {
     if (e.message && e.message.includes("UNIQUE"))
-      return res.status(409).json({ status: "error", error: "Zone name already exists" });
+      return res
+        .status(409)
+        .json({ status: "error", error: "Zone name already exists" });
     res.status(500).json({ status: "error", error: e.message });
   }
 });
@@ -1194,28 +1208,22 @@ app.post("/api/config/save", requireAdmin, (req, res) => {
   const parsedEmpty = parseInt(emptyThreshold, 10);
 
   if (isNaN(parsedFull) || parsedFull < 0 || parsedFull > 100) {
-    return res
-      .status(400)
-      .json({
-        status: "error",
-        message: "Invalid FULL_THRESHOLD (must be 0-100)",
-      });
+    return res.status(400).json({
+      status: "error",
+      message: "Invalid FULL_THRESHOLD (must be 0-100)",
+    });
   }
   if (isNaN(parsedEmpty) || parsedEmpty < 0 || parsedEmpty > 100) {
-    return res
-      .status(400)
-      .json({
-        status: "error",
-        message: "Invalid EMPTY_THRESHOLD (must be 0-100)",
-      });
+    return res.status(400).json({
+      status: "error",
+      message: "Invalid EMPTY_THRESHOLD (must be 0-100)",
+    });
   }
   if (parsedEmpty >= parsedFull) {
-    return res
-      .status(400)
-      .json({
-        status: "error",
-        message: "EMPTY_THRESHOLD must be less than FULL_THRESHOLD",
-      });
+    return res.status(400).json({
+      status: "error",
+      message: "EMPTY_THRESHOLD must be less than FULL_THRESHOLD",
+    });
   }
 
   FULL_THRESHOLD = parsedFull;
@@ -1242,12 +1250,10 @@ app.post("/api/config/save", requireAdmin, (req, res) => {
     });
   } catch (err) {
     console.error("Failed to save .env file:", err);
-    res
-      .status(500)
-      .json({
-        status: "error",
-        message: `Failed to write configuration: ${err.message}`,
-      });
+    res.status(500).json({
+      status: "error",
+      message: `Failed to write configuration: ${err.message}`,
+    });
   }
 });
 
@@ -1336,8 +1342,9 @@ app.get("/api/admin/select-directory", requireAdmin, (req, res) => {
 const clientDistPath = path.join(__dirname, "../client/dist");
 if (fs.existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
-  app.get("*", (req, res, next) => {
-    if (req.path.startsWith("/api") || req.path.startsWith("/ws")) return next();
+  app.get("/{*splat}", (req, res, next) => {
+    if (req.path.startsWith("/api") || req.path.startsWith("/ws"))
+      return next();
     res.sendFile(path.join(clientDistPath, "index.html"));
   });
 }

@@ -75,7 +75,10 @@ function BinCard({
             <div className="bin-zone-badge">
               <span
                 className="bin-zone-dot"
-                style={{ background: zones.find((z) => z.name === zoneName)?.color || "#4f98a3" }}
+                style={{
+                  background:
+                    zones.find((z) => z.name === zoneName)?.color || "#4f98a3",
+                }}
               />
               {zoneName}
             </div>

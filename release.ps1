@@ -105,7 +105,7 @@ if ($releaseExists -and $assetExists) {
     Write-Host "  You must bump the version to continue." -ForegroundColor White
     Write-Host ""
 
-    :versionLoop while ($true) {
+    while ($true) {
         $newVersion = (Read-Host "  Enter new version (e.g. 2.14.0)").Trim()
 
         if ($newVersion -eq "") {
@@ -114,7 +114,7 @@ if ($releaseExists -and $assetExists) {
         }
         if (-not ($newVersion -match "^\d+\.\d+\.\d+$")) {
             Write-Host "  Invalid format. Use MAJOR.MINOR.PATCH — try again (or press Enter to abort)." -ForegroundColor Red
-            continue versionLoop
+            continue
         }
 
         # Patch package.json using PowerShell native JSON updating
@@ -135,7 +135,7 @@ if ($releaseExists -and $assetExists) {
         Write-Host "  [OK] Version bumped to $VERSION." -ForegroundColor Green
         Write-Host "  NOTE: Remember to add ## [v$VERSION] to CHANGELOG.md" -ForegroundColor Yellow
         Write-Host ""
-        break versionLoop
+        break
     }
 
 } elseif ($releaseExists) {

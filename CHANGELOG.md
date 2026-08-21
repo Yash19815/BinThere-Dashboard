@@ -17,6 +17,9 @@ Overhauled Docker containerization stack with security-hardened multi-stage buil
 - **`/api/health` Liveness Probe**: Added unauthenticated `/api/health` REST endpoint in `server/server.js` returning system status and uptime for Docker healthchecks.
 - **Production Static Asset Serving**: Added static file middleware in `server/server.js` to serve `client/dist` frontend assets when running in production.
 
+### Fixed
+- **PowerShell Release Loop Syntax**: Resolved `MissingEndCurlyBrace` parser error in `release.ps1` by replacing non-standard `:versionLoop` syntax with standard PowerShell loop control.
+
 ### Changed
 - **Multi-Stage `Dockerfile`**: Migrated from invalid base image `node:26.2.0-alpine` to Node 20-alpine 3-stage build context (`client-builder`, `server-builder`, `runner`) with native `better-sqlite3` compilation tooling (`python3`, `make`, `g++`, `sqlite-dev`).
 - **`compose.yaml`**: Refactored compose file with container name `binthere-server`, `restart: unless-stopped`, healthcheck strategy, and persistent named volume `binthere_data`.
