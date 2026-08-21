@@ -2,11 +2,15 @@
 
 | Version  | Date       | Type           | Summary                                                                                              |
 | -------- | ---------- | -------------- | ---------------------------------------------------------------------------------------------------- |
+| v2.15.4  | 2026-08-20 | 🔧 Fix      | Replaces non-standard PowerShell label-based loop control in release.ps1 with standard while/continue/break to avoid parser errors, and aligns release.bat to invoke PowerShell consistently. Also upgrades server better-sqlite3 to ^13.0.3 (with lockfile refresh) and updates the SPA catch-all route to `/{*splat}` for compatibility with newer Express/path matching behavior. Remaining changes are mostly formatting and changelog notes.|
 | v2.15.3  | 2026-08-19 | 🚀 Update      | Production Docker multi-stage containerization, liveness health checks, and persistent volume setup  |
 | v2.15.2  | 2026-08-19 | 🔧 Fix         | Fixed `better-sqlite3` native module ABI mismatch and PowerShell release script parser errors        |
 | v2.15.1  | 2026-07-11 | 🚀 Update      | Unified setup automation: synchronised configs (ESP32/OTA/Python) and Python virtual environment     |
 | v2.15.0  | 2026-05-31 | ✨ Feature     | Zonal Mapping: zones, zone view, BinCard zone badge/select, zone fields in Add/Edit bin modals       |
 | v2.14.5  | 2026-05-30 | 📝 Docs        | Synchronized and corrected code-mismatches and security gaps across all project README files        |
+
+## [v2.15.4] — 2026-08-20
+Replaces non-standard PowerShell label-based loop control in release.ps1 with standard while/continue/break to avoid parser errors, and aligns release.bat to invoke PowerShell consistently. Also upgrades server better-sqlite3 to ^13.0.3 (with lockfile refresh) and updates the SPA catch-all route to `/{*splat}` for compatibility with newer Express/path matching behavior. Remaining changes are mostly formatting and changelog notes.
 
 ## [v2.15.3] — 2026-08-19
 
